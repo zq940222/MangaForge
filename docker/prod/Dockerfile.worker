@@ -1,0 +1,46 @@
+# MangaForge Worker - Production Dockerfile
+FROM python:3.11-slim as builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt requirements-worker.txt ./
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt -r requirements-worker.txt
+
+# Production image
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    libpq5 \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
+
+# Copy installed packages from builder
+COPY --from=builder /install /usr/local
+
+# Copy source code
+COPY src/ ./src/
+
+# Create directories
+RUN mkdir -p /app/assets /app/models
+
+# Create non-root user
+RUN useradd -m -u 1000 mangaforge && \
+    chown -R mangaforge:mangaforge /app
+
+USER mangaforge
+
+CMD ["celery", "-A", "src.workers.celery_app", "worker", "--loglevel=warning", "--concurrency=4"]

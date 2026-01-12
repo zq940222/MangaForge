@@ -1,0 +1,118 @@
+# MangaForge .gitignore
+
+# ===========================================
+# Python
+# ===========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ===========================================
+# Virtual Environment
+# ===========================================
+.env
+.venv
+env/
+venv/
+ENV/
+
+# ===========================================
+# IDE
+# ===========================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# ===========================================
+# Testing
+# ===========================================
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.nox/
+
+# ===========================================
+# Type Checking
+# ===========================================
+.mypy_cache/
+.dmypy.json
+
+# ===========================================
+# Jupyter
+# ===========================================
+.ipynb_checkpoints/
+
+# ===========================================
+# Project Specific
+# ===========================================
+# Generated assets
+assets/generated/
+assets/output/
+
+# Model files (large)
+models/*.safetensors
+models/*.ckpt
+models/*.pt
+models/*.bin
+
+# ComfyUI outputs
+src/workflows/output/
+
+# Logs
+logs/
+*.log
+
+# Database files
+*.db
+*.sqlite3
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker volumes (local)
+docker/dev/volumes/
+docker/prod/volumes/
+
+# Secrets
+*.pem
+*.key
+secrets/
+.secrets/
+
+# ===========================================
+# Environment files (keep .env.example)
+# ===========================================
+.env
+.env.local
+.env.*.local
+docker/prod/.env
+docker/dev/.env

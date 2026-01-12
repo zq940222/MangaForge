@@ -1,0 +1,33 @@
+# MangaForge - Worker Dependencies (GPU/ML specific)
+
+# ===========================================
+# ComfyUI Integration
+# ===========================================
+websocket-client>=1.7.0
+
+# ===========================================
+# Audio/TTS
+# ===========================================
+# Note: For production, install coqui-tts separately with GPU support
+# pip install coqui-tts
+
+# ===========================================
+# Video Processing
+# ===========================================
+imageio>=2.33.1
+imageio-ffmpeg>=0.4.9
+moviepy>=1.0.3
+
+# ===========================================
+# PDF Generation
+# ===========================================
+reportlab>=4.0.8
+PyPDF2>=3.0.1
+weasyprint>=60.2
+
+# ===========================================
+# Additional ML Tools
+# ===========================================
+transformers>=4.37.0
+accelerate>=0.26.1
+safetensors>=0.4.2

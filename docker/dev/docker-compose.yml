@@ -1,0 +1,314 @@
+# MangaForge - Development Environment
+# AI漫剧Agent系统 - 开发环境配置
+# Version: 2.0.0
+
+version: '3.9'
+
+services:
+  # ===========================================
+  # Core API Service
+  # ===========================================
+  api:
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile.api
+    container_name: mangaforge-api-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../src:/app/src
+      - ../../tests:/app/tests
+      - assets_data:/app/assets
+    environment:
+      - ENV=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql://mangaforge:mangaforge_dev@postgres:5432/mangaforge_dev
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - COMFYUI_URL=http://comfyui:8188
+      - SADTALKER_URL=http://sadtalker:7860
+      - ONE_API_URL=http://one-api:3000
+      - ONE_API_KEY=${ONE_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - mangaforge-network
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ===========================================
+  # Worker Service (Celery)
+  # ===========================================
+  worker:
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile.worker
+    container_name: mangaforge-worker-dev
+    volumes:
+      - ../../src:/app/src
+      - assets_data:/app/assets
+      - models_data:/app/models
+    environment:
+      - ENV=development
+      - DATABASE_URL=postgresql://mangaforge:mangaforge_dev@postgres:5432/mangaforge_dev
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - COMFYUI_URL=http://comfyui:8188
+      - SADTALKER_URL=http://sadtalker:7860
+      - ONE_API_URL=http://one-api:3000
+      - ONE_API_KEY=${ONE_API_KEY:-}
+    depends_on:
+      - api
+      - rabbitmq
+    networks:
+      - mangaforge-network
+    command: celery -A src.workers.celery_app worker --loglevel=info --concurrency=2
+
+  # ===========================================
+  # One-API - LLM Gateway (用户自配Key)
+  # 支持OpenAI/Anthropic/DeepSeek/Gemini等
+  # ===========================================
+  one-api:
+    image: justsong/one-api:latest
+    container_name: mangaforge-one-api-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - one_api_data:/data
+    environment:
+      - SQL_DSN=postgres://mangaforge:mangaforge_dev@postgres:5432/one_api?sslmode=disable
+      - REDIS_CONN_STRING=redis://redis:6379/1
+      - SESSION_SECRET=mangaforge_session_secret_dev
+      - INITIAL_ROOT_TOKEN=${ONE_API_ROOT_TOKEN:-mangaforge_root_token}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - mangaforge-network
+    restart: unless-stopped
+
+  # ===========================================
+  # ComfyUI - Image Generation Engine
+  # 用于分镜图生成、角色一致性
+  # ===========================================
+  comfyui:
+    image: ghcr.io/ai-dock/comfyui:latest
+    container_name: mangaforge-comfyui-dev
+    ports:
+      - "8188:8188"
+    volumes:
+      - comfyui_models:/workspace/ComfyUI/models
+      - comfyui_output:/workspace/ComfyUI/output
+      - comfyui_input:/workspace/ComfyUI/input
+      - ../../src/workflows:/workspace/ComfyUI/user/default/workflows
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - mangaforge-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8188/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ===========================================
+  # SadTalker - Lip Sync Service
+  # 口型同步：静态图+音频 → 说话视频
+  # ===========================================
+  sadtalker:
+    image: registry.cn-hangzhou.aliyuncs.com/modelscope-repo/modelscope:ubuntu22.04-cuda12.1.0-py310-torch2.1.2-tf2.14.0-1.12.0
+    container_name: mangaforge-sadtalker-dev
+    ports:
+      - "7860:7860"
+    volumes:
+      - sadtalker_models:/app/models
+      - sadtalker_output:/app/output
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - mangaforge-network
+    # 启动脚本需要自行配置，这里提供基础镜像
+    command: >
+      bash -c "
+        pip install gradio sadtalker &&
+        python -m sadtalker.gradio_demo --server_name 0.0.0.0 --server_port 7860
+      "
+    profiles:
+      - gpu  # 仅在有GPU时启用
+
+  # ===========================================
+  # Fish-Speech - Voice Clone TTS
+  # 中文语音克隆，用于角色配音
+  # ===========================================
+  fish-speech:
+    image: fishaudio/fish-speech:latest
+    container_name: mangaforge-fish-speech-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - fish_speech_models:/app/models
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - mangaforge-network
+    profiles:
+      - gpu  # 仅在有GPU时启用
+
+  # ===========================================
+  # PostgreSQL Database
+  # ===========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: mangaforge-postgres-dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      - POSTGRES_USER=mangaforge
+      - POSTGRES_PASSWORD=mangaforge_dev
+      - POSTGRES_DB=mangaforge_dev
+    networks:
+      - mangaforge-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mangaforge -d mangaforge_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # Redis Cache & Queue
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: mangaforge-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mangaforge-network
+    command: redis-server --appendonly yes
+
+  # ===========================================
+  # MinIO Object Storage
+  # 存储图片、视频、音频等资产
+  # ===========================================
+  minio:
+    image: minio/minio:latest
+    container_name: mangaforge-minio-dev
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    networks:
+      - mangaforge-network
+    command: server /data --console-address ":9001"
+
+  # ===========================================
+  # RabbitMQ Message Queue
+  # ===========================================
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: mangaforge-rabbitmq-dev
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    networks:
+      - mangaforge-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================
+  # pgAdmin (Database Management)
+  # ===========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: mangaforge-pgadmin-dev
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@mangaforge.local
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - mangaforge-network
+    profiles:
+      - tools
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  mangaforge-network:
+    driver: bridge
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  rabbitmq_data:
+  pgadmin_data:
+  assets_data:
+  models_data:
+  one_api_data:
+  comfyui_models:
+  comfyui_output:
+  comfyui_input:
+  sadtalker_models:
+  sadtalker_output:
+  fish_speech_models:
