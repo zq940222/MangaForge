@@ -178,6 +178,49 @@ CREATE TABLE IF NOT EXISTS assets (
 COMMENT ON TABLE assets IS '所有生成的资产文件';
 
 -- =============================================
+-- 平台账号表
+-- =============================================
+CREATE TABLE IF NOT EXISTS platform_accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    platform VARCHAR(50) NOT NULL,  -- douyin / bilibili / kuaishou / wechat_channels
+    account_name VARCHAR(100) NOT NULL,
+    platform_user_id VARCHAR(100),
+    access_token_encrypted TEXT,
+    refresh_token_encrypted TEXT,
+    token_expires_at TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20) DEFAULT 'disconnected',  -- connected / expired / disconnected / error
+    settings JSONB DEFAULT '{}',
+    auto_publish BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE platform_accounts IS '用户关联的发布平台账号';
+
+-- =============================================
+-- 发布记录表
+-- =============================================
+CREATE TABLE IF NOT EXISTS publish_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    platform_account_id UUID REFERENCES platform_accounts(id) ON DELETE CASCADE,
+    episode_id UUID REFERENCES episodes(id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'pending',  -- pending / publishing / published / failed / deleted
+    platform_video_id VARCHAR(200),
+    platform_video_url VARCHAR(500),
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    hashtags JSONB DEFAULT '[]',
+    publish_settings JSONB DEFAULT '{}',
+    error_message TEXT,
+    published_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+COMMENT ON TABLE publish_records IS '视频发布记录';
+
+-- =============================================
 -- 索引
 -- =============================================
 CREATE INDEX IF NOT EXISTS idx_projects_user ON projects(user_id);
@@ -193,6 +236,11 @@ CREATE INDEX IF NOT EXISTS idx_tasks_type ON tasks(task_type);
 CREATE INDEX IF NOT EXISTS idx_tasks_project ON tasks(project_id);
 CREATE INDEX IF NOT EXISTS idx_assets_project ON assets(project_id);
 CREATE INDEX IF NOT EXISTS idx_assets_type ON assets(asset_type);
+CREATE INDEX IF NOT EXISTS idx_platform_accounts_user ON platform_accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_platform_accounts_platform ON platform_accounts(platform);
+CREATE INDEX IF NOT EXISTS idx_publish_records_account ON publish_records(platform_account_id);
+CREATE INDEX IF NOT EXISTS idx_publish_records_episode ON publish_records(episode_id);
+CREATE INDEX IF NOT EXISTS idx_publish_records_status ON publish_records(status);
 
 -- =============================================
 -- 触发器：自动更新 updated_at
@@ -214,6 +262,18 @@ CREATE TRIGGER update_projects_updated_at
 DROP TRIGGER IF EXISTS update_user_api_configs_updated_at ON user_api_configs;
 CREATE TRIGGER update_user_api_configs_updated_at
     BEFORE UPDATE ON user_api_configs
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_platform_accounts_updated_at ON platform_accounts;
+CREATE TRIGGER update_platform_accounts_updated_at
+    BEFORE UPDATE ON platform_accounts
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_publish_records_updated_at ON publish_records;
+CREATE TRIGGER update_publish_records_updated_at
+    BEFORE UPDATE ON publish_records
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 

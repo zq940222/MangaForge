@@ -91,7 +91,7 @@ function calculateOverallProgress(stages: Record<GenerationStage, StageInfo>): n
   return totalWeight > 0 ? (completedWeight / totalWeight) * 100 : 0
 }
 
-export const useGenerationStore = create<GenerationState>((set, get) => ({
+export const useGenerationStore = create<GenerationState>((set) => ({
   taskId: null,
   episodeId: null,
   status: 'idle',

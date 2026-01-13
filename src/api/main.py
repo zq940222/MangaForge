@@ -78,7 +78,7 @@ async def root():
 
 
 # Import and include routers
-from src.api.routes import projects, characters, episodes, generation, config
+from src.api.routes import projects, characters, episodes, generation, config, platforms
 from src.api.websocket import progress as ws_progress
 
 # API routes
@@ -87,6 +87,7 @@ app.include_router(characters.router, prefix=settings.api_prefix)
 app.include_router(episodes.router, prefix=settings.api_prefix)
 app.include_router(generation.router, prefix=settings.api_prefix)
 app.include_router(config.router, prefix=settings.api_prefix)
+app.include_router(platforms.router, prefix=settings.api_prefix)
 
 # WebSocket routes
 app.include_router(ws_progress.router, prefix=settings.api_prefix)

@@ -6,6 +6,7 @@ from .characters import router as characters_router
 from .episodes import router as episodes_router
 from .generation import router as generation_router
 from .config import router as config_router
+from .platforms import router as platforms_router
 
 __all__ = [
     "projects_router",
@@ -13,4 +14,5 @@ __all__ = [
     "episodes_router",
     "generation_router",
     "config_router",
+    "platforms_router",
 ]

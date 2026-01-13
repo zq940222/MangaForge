@@ -94,7 +94,7 @@ class Episode(Base, UUIDMixin, TimestampMixin):
     thumbnail_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     duration: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # 秒
 
-    metadata: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    extra_data: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, name="metadata")
     completed_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

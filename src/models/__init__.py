@@ -7,6 +7,7 @@ from .character import Character
 from .task import Task
 from .user_config import UserApiConfig, SupportedProvider
 from .asset import Asset
+from .platform import PlatformAccount, PublishRecord
 
 __all__ = [
     "Base",
@@ -18,4 +19,6 @@ __all__ = [
     "UserApiConfig",
     "SupportedProvider",
     "Asset",
+    "PlatformAccount",
+    "PublishRecord",
 ]

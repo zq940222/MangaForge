@@ -57,7 +57,7 @@ export function useGeneration(taskId?: string) {
   })
 
   // Status polling (fallback if WebSocket fails)
-  const statusQuery = useQuery({
+  useQuery({
     queryKey: ['generation-status', taskId],
     queryFn: () => generationApi.getStatus(taskId!),
     enabled: !!taskId && store.status === 'running',

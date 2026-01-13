@@ -4,19 +4,27 @@ export interface Shot {
   id: string
   episode_id: string
   shot_number: number
-  scene: string
-  action: string
-  dialog?: string
-  speaker?: string
-  duration: number
+  scene_description?: string
+  camera_type?: string
   camera_movement?: string
+  dialog?: {
+    speaker?: string
+    text?: string
+    emotion?: string
+  }
+  duration: number
   image_prompt?: string
+  negative_prompt?: string
+  video_prompt?: string
   image_path?: string
   video_path?: string
   audio_path?: string
-  lipsync_path?: string
+  lipsync_video_path?: string
+  final_video_path?: string
+  status: 'pending' | 'rendering' | 'completed' | 'failed'
+  error_message?: string
   created_at: string
-  updated_at: string
+  updated_at?: string
 }
 
 export interface Episode {

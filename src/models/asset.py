@@ -31,8 +31,8 @@ class Asset(Base, UUIDMixin, TimestampMixin):
     mime_type: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     size_bytes: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
 
-    # 元数据
-    metadata: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    # 元数据 (使用 extra_data 避免与 SQLAlchemy 保留字冲突)
+    extra_data: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, name="metadata")
 
     def __repr__(self) -> str:
         return f"<Asset(id={self.id}, type={self.asset_type}, name={self.name})>"

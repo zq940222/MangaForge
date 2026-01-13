@@ -49,6 +49,10 @@ def redis_client() -> Redis:
     return _redis_client
 
 
+# Alias for compatibility
+get_redis_client = redis_client
+
+
 class RedisCache:
     """Redis cache helper class."""
 
