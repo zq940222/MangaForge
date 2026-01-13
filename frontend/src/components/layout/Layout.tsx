@@ -4,11 +4,12 @@ import { Sidebar } from './Sidebar'
 
 export function Layout() {
   return (
-    <div className="min-h-screen bg-gray-900 flex">
+    <div className="flex h-screen bg-background-dark overflow-hidden font-display text-white">
       <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-background-dark relative">
         <Header />
-        <main className="flex-1 p-6 overflow-auto">
+        {/* Main content area - pages must handle their own scrolling */}
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           <Outlet />
         </main>
       </div>

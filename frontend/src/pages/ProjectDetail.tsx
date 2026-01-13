@@ -1,16 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  ArrowLeft,
-  Plus,
-  Play,
-  Users,
-  Film,
-  Settings,
-  Trash2,
-  Edit3,
-} from 'lucide-react'
 import { projectsApi } from '../api/projects'
 import { episodesApi, EpisodeCreate } from '../api/episodes'
 import { charactersApi, CharacterCreate } from '../api/characters'
@@ -21,7 +11,6 @@ type Tab = 'episodes' | 'characters' | 'settings'
 
 export function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>()
-  const navigate = useNavigate()
   const queryClient = useQueryClient()
 
   const [activeTab, setActiveTab] = useState<Tab>('episodes')
@@ -101,8 +90,8 @@ export function ProjectDetail() {
   if (!project) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-400">项目不存在</p>
-        <Link to="/projects" className="text-primary-400 hover:text-primary-300 mt-2 inline-block">
+        <p className="text-text-secondary">项目不存在</p>
+        <Link to="/projects" className="text-primary hover:text-blue-400 mt-2 inline-block">
           返回项目列表
         </Link>
       </div>
@@ -110,29 +99,30 @@ export function ProjectDetail() {
   }
 
   const tabs = [
-    { id: 'episodes' as Tab, label: '集数', icon: Film, count: episodes?.length ?? 0 },
-    { id: 'characters' as Tab, label: '角色', icon: Users, count: characters?.length ?? 0 },
-    { id: 'settings' as Tab, label: '设置', icon: Settings },
+    { id: 'episodes' as Tab, label: '集数', icon: 'movie', count: episodes?.length ?? 0 },
+    { id: 'characters' as Tab, label: '角色', icon: 'group', count: characters?.length ?? 0 },
+    { id: 'settings' as Tab, label: '设置', icon: 'settings' },
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8">
+    <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link to="/projects" className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
-          <ArrowLeft className="w-5 h-5" />
+        <Link to="/projects" className="p-2 hover:bg-surface-dark rounded-lg transition-colors text-text-secondary hover:text-white">
+          <span className="material-symbols-outlined">arrow_back</span>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{project.title}</h1>
-          <p className="text-gray-400">{project.description || '暂无描述'}</p>
+          <h1 className="text-2xl font-bold text-white">{project.title}</h1>
+          <p className="text-text-secondary">{project.description || '暂无描述'}</p>
         </div>
         <span
-          className={`px-3 py-1 rounded-full text-sm ${
+          className={`px-3 py-1 rounded-full text-sm font-bold border ${
             project.status === 'completed'
-              ? 'bg-green-900/50 text-green-400'
+              ? 'bg-green-500/10 text-green-400 border-green-500/20'
               : project.status === 'processing'
-              ? 'bg-yellow-900/50 text-yellow-400'
-              : 'bg-gray-600 text-gray-300'
+              ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+              : 'bg-surface-dark text-text-secondary border-border-dark'
           }`}
         >
           {project.status === 'draft' ? '草稿' :
@@ -142,22 +132,22 @@ export function ProjectDetail() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-700">
-        <div className="flex gap-4">
+      <div className="border-b border-border-dark">
+        <div className="flex gap-6">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-2 py-3 border-b-2 transition-colors font-medium ${
                 activeTab === tab.id
-                  ? 'border-primary-500 text-white'
-                  : 'border-transparent text-gray-400 hover:text-white'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-text-secondary hover:text-white'
               }`}
             >
-              <tab.icon className="w-4 h-4" />
+              <span className="material-symbols-outlined text-[20px]">{tab.icon}</span>
               {tab.label}
               {tab.count !== undefined && (
-                <span className="px-1.5 py-0.5 bg-gray-700 rounded text-xs">{tab.count}</span>
+                <span className="px-1.5 py-0.5 bg-surface-dark border border-border-dark rounded text-xs">{tab.count}</span>
               )}
             </button>
           ))}
@@ -179,7 +169,7 @@ export function ProjectDetail() {
               }}
               className="btn btn-primary flex items-center gap-2"
             >
-              <Plus className="w-4 h-4" />
+              <span className="material-symbols-outlined text-[20px]">add</span>
               添加集数
             </button>
           </div>
@@ -189,25 +179,25 @@ export function ProjectDetail() {
               <LoadingSpinner />
             </div>
           ) : episodes?.length === 0 ? (
-            <div className="card text-center py-8">
-              <Film className="w-12 h-12 mx-auto mb-2 text-gray-600" />
-              <p className="text-gray-400">暂无集数，添加第一集开始创作</p>
+            <div className="card text-center py-12 border-dashed border-2">
+              <span className="material-symbols-outlined text-6xl text-text-secondary mb-2">movie</span>
+              <p className="text-text-secondary">暂无集数，添加第一集开始创作</p>
             </div>
           ) : (
             <div className="space-y-3">
               {episodes?.map((episode) => (
-                <div key={episode.id} className="card flex items-center justify-between group">
+                <div key={episode.id} className="card flex items-center justify-between group hover:border-primary/30 transition-colors">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <span className="text-gray-500">第 {episode.episode_number} 集</span>
-                      <h3 className="font-medium">{episode.title}</h3>
+                      <span className="text-text-secondary font-mono">#{episode.episode_number}</span>
+                      <h3 className="font-bold text-white">{episode.title}</h3>
                       <span
-                        className={`px-2 py-0.5 rounded text-xs ${
+                        className={`px-2 py-0.5 rounded text-xs font-bold border ${
                           episode.status === 'completed'
-                            ? 'bg-green-900/50 text-green-400'
+                            ? 'bg-green-500/10 text-green-400 border-green-500/20'
                             : episode.status === 'processing'
-                            ? 'bg-yellow-900/50 text-yellow-400'
-                            : 'bg-gray-600 text-gray-300'
+                            ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                            : 'bg-surface-dark text-text-secondary border-border-dark'
                         }`}
                       >
                         {episode.status === 'pending' ? '待处理' :
@@ -215,17 +205,17 @@ export function ProjectDetail() {
                          episode.status === 'completed' ? '已完成' : episode.status}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-sm text-text-secondary mt-1">
                       {episode.shots_count} 镜头 · {episode.script_input?.slice(0, 50) || '暂无剧本'}...
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Link
                       to={`/projects/${projectId}/generate/${episode.id}`}
-                      className="btn btn-primary flex items-center gap-2"
+                      className="btn btn-primary flex items-center gap-2 text-sm"
                     >
-                      <Play className="w-4 h-4" />
-                      生成
+                      <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+                      Editor
                     </Link>
                     <button
                       onClick={() => {
@@ -233,9 +223,9 @@ export function ProjectDetail() {
                           deleteEpisodeMutation.mutate(episode.id)
                         }
                       }}
-                      className="p-2 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-2 text-text-secondary hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <span className="material-symbols-outlined">delete</span>
                     </button>
                   </div>
                 </div>
@@ -252,7 +242,7 @@ export function ProjectDetail() {
               onClick={() => setIsCharacterModalOpen(true)}
               className="btn btn-primary flex items-center gap-2"
             >
-              <Plus className="w-4 h-4" />
+              <span className="material-symbols-outlined text-[20px]">add</span>
               添加角色
             </button>
           </div>
@@ -262,32 +252,32 @@ export function ProjectDetail() {
               <LoadingSpinner />
             </div>
           ) : characters?.length === 0 ? (
-            <div className="card text-center py-8">
-              <Users className="w-12 h-12 mx-auto mb-2 text-gray-600" />
-              <p className="text-gray-400">暂无角色，添加角色来定义您的故事</p>
+            <div className="card text-center py-12 border-dashed border-2">
+              <span className="material-symbols-outlined text-6xl text-text-secondary mb-2">group</span>
+              <p className="text-text-secondary">暂无角色，添加角色来定义您的故事</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {characters?.map((character) => (
-                <div key={character.id} className="card group relative">
+                <div key={character.id} className="card group relative hover:border-primary/30 transition-colors">
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center text-2xl">
+                    <div className="w-16 h-16 bg-background-dark rounded-lg flex items-center justify-center text-2xl overflow-hidden border border-border-dark">
                       {character.reference_images?.[0] ? (
                         <img
                           src={character.reference_images[0]}
                           alt={character.name}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
-                        '👤'
+                        <span className="material-symbols-outlined text-text-secondary">person</span>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium truncate">{character.name}</h3>
-                      <p className="text-sm text-gray-400">
-                        {character.gender} · {character.age_range}
+                      <h3 className="font-bold text-white truncate">{character.name}</h3>
+                      <p className="text-xs text-primary font-medium mt-0.5">
+                        {character.gender === 'male' ? '男性' : character.gender === 'female' ? '女性' : character.gender} · {character.age_range}
                       </p>
-                      <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+                      <p className="text-xs text-text-secondary mt-2 line-clamp-2 leading-relaxed">
                         {character.description || '暂无描述'}
                       </p>
                     </div>
@@ -298,9 +288,9 @@ export function ProjectDetail() {
                         deleteCharacterMutation.mutate(character.id)
                       }
                     }}
-                    className="absolute top-4 right-4 p-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="absolute top-4 right-4 p-1 text-text-secondary hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
                   </button>
                 </div>
               ))}
@@ -311,19 +301,19 @@ export function ProjectDetail() {
 
       {activeTab === 'settings' && (
         <div className="card max-w-2xl">
-          <h3 className="text-lg font-medium mb-4">项目设置</h3>
+          <h3 className="text-lg font-bold text-white mb-4">项目设置</h3>
           <div className="space-y-4">
             <div>
               <label className="label">风格</label>
-              <div className="text-gray-300">{project.style}</div>
+              <div className="text-gray-300 font-mono bg-background-dark px-3 py-2 rounded border border-border-dark">{project.style}</div>
             </div>
             <div>
               <label className="label">目标平台</label>
-              <div className="text-gray-300">{project.target_platform}</div>
+              <div className="text-gray-300 font-mono bg-background-dark px-3 py-2 rounded border border-border-dark">{project.target_platform}</div>
             </div>
             <div>
               <label className="label">画面比例</label>
-              <div className="text-gray-300">{project.aspect_ratio}</div>
+              <div className="text-gray-300 font-mono bg-background-dark px-3 py-2 rounded border border-border-dark">{project.aspect_ratio}</div>
             </div>
           </div>
         </div>
@@ -372,7 +362,7 @@ export function ProjectDetail() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <button onClick={() => setIsEpisodeModalOpen(false)} className="btn btn-secondary">
+            <button onClick={() => setIsEpisodeModalOpen(false)} className="btn bg-surface-dark border border-border-dark hover:bg-border-dark text-white">
               取消
             </button>
             <button
@@ -459,7 +449,7 @@ export function ProjectDetail() {
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
-            <button onClick={() => setIsCharacterModalOpen(false)} className="btn btn-secondary">
+            <button onClick={() => setIsCharacterModalOpen(false)} className="btn bg-surface-dark border border-border-dark hover:bg-border-dark text-white">
               取消
             </button>
             <button
@@ -472,6 +462,7 @@ export function ProjectDetail() {
           </div>
         </div>
       </Modal>
+    </div>
     </div>
   )
 }

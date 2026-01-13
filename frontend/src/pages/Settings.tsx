@@ -1,379 +1,212 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, Check, X, Loader2 } from 'lucide-react'
-import { configApi, Provider, UserConfig, UserConfigCreate, TestConnectionRequest } from '../api/config'
-import { LoadingSpinner } from '../components/common/LoadingSpinner'
-import { Modal } from '../components/common/Modal'
-
-type ServiceType = 'llm' | 'image' | 'video' | 'voice' | 'lipsync'
-
-const serviceTypeLabels: Record<ServiceType, string> = {
-  llm: 'AI 大模型',
-  image: '图像生成',
-  video: '视频生成',
-  voice: '语音合成',
-  lipsync: '口型同步',
-}
-
 export function Settings() {
-  const [activeService, setActiveService] = useState<ServiceType>('llm')
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
-  const [newConfig, setNewConfig] = useState<UserConfigCreate>({
-    service_type: 'llm',
-    provider: '',
-    api_key: '',
-    endpoint: '',
-    model: '',
-    priority: 1,
-  })
-
-  const queryClient = useQueryClient()
-
-  const { data: providers, isLoading: providersLoading } = useQuery({
-    queryKey: ['providers', activeService],
-    queryFn: () => configApi.listProviders(activeService),
-  })
-
-  const { data: configs, isLoading: configsLoading } = useQuery({
-    queryKey: ['configs', activeService],
-    queryFn: () => configApi.listUserConfigs(activeService),
-  })
-
-  const createMutation = useMutation({
-    mutationFn: (data: UserConfigCreate) => configApi.createConfig(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['configs'] })
-      setIsAddModalOpen(false)
-      setNewConfig({
-        service_type: activeService,
-        provider: '',
-        api_key: '',
-        endpoint: '',
-        model: '',
-        priority: 1,
-      })
-      setTestResult(null)
-    },
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => configApi.deleteConfig(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['configs'] })
-    },
-  })
-
-  const testMutation = useMutation({
-    mutationFn: (data: TestConnectionRequest) => configApi.testConnection(data),
-    onSuccess: (result) => {
-      setTestResult(result)
-    },
-    onError: (error: Error) => {
-      setTestResult({ success: false, message: error.message })
-    },
-  })
-
-  const handleTest = () => {
-    if (!newConfig.provider || !newConfig.api_key) return
-    testMutation.mutate({
-      service_type: newConfig.service_type,
-      provider: newConfig.provider,
-      api_key: newConfig.api_key,
-      endpoint: newConfig.endpoint || undefined,
-      model: newConfig.model || undefined,
-    })
-  }
-
-  const selectedProvider = providers?.find((p) => p.name === newConfig.provider)
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">API 设置</h1>
-      </div>
-
-      {/* Service Type Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {(Object.keys(serviceTypeLabels) as ServiceType[]).map((type) => (
-          <button
-            key={type}
-            onClick={() => setActiveService(type)}
-            className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
-              activeService === type
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-            }`}
-          >
-            {serviceTypeLabels[type]}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Available Providers */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium">可用服务商</h3>
-          </div>
-
-          {providersLoading ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : providers?.length === 0 ? (
-            <p className="text-gray-400 text-center py-4">暂无可用服务商</p>
-          ) : (
-            <div className="space-y-3">
-              {providers?.map((provider) => (
-                <div
-                  key={provider.id}
-                  className="p-4 bg-gray-700/50 rounded-lg flex items-center justify-between"
-                >
-                  <div>
-                    <div className="font-medium">{provider.name}</div>
-                    <div className="text-sm text-gray-400">
-                      {provider.description}
-                    </div>
-                    <div className="flex gap-2 mt-1">
-                      {provider.is_local && (
-                        <span className="px-1.5 py-0.5 bg-blue-900/50 text-blue-400 rounded text-xs">
-                          本地
-                        </span>
-                      )}
-                      {provider.requires_gpu && (
-                        <span className="px-1.5 py-0.5 bg-yellow-900/50 text-yellow-400 rounded text-xs">
-                          需要 GPU
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setNewConfig({
-                        ...newConfig,
-                        service_type: activeService,
-                        provider: provider.name,
-                        endpoint: provider.default_endpoint || '',
-                      })
-                      setIsAddModalOpen(true)
-                    }}
-                    className="btn btn-secondary"
-                  >
-                    配置
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8">
+    <div className="max-w-4xl mx-auto flex flex-col gap-8 pb-12">
+      {/* Page Heading */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-2">
+        <div className="flex flex-col gap-2 max-w-2xl">
+          <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Agent Neural Configuration</h1>
+          <p className="text-text-secondary text-base font-normal leading-relaxed">
+            Manage the external cognitive services that power your MangaForge agent. 
+            Configure API keys for LLMs, image synthesis, video generation, and voice cloning models.
+          </p>
         </div>
-
-        {/* Configured Services */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium">已配置服务</h3>
-            <button
-              onClick={() => {
-                setNewConfig({
-                  service_type: activeService,
-                  provider: '',
-                  api_key: '',
-                  endpoint: '',
-                  model: '',
-                  priority: 1,
-                })
-                setIsAddModalOpen(true)
-              }}
-              className="btn btn-primary btn-sm flex items-center gap-1"
-            >
-              <Plus className="w-4 h-4" />
-              添加
-            </button>
-          </div>
-
-          {configsLoading ? (
-            <div className="flex justify-center py-8">
-              <LoadingSpinner />
-            </div>
-          ) : configs?.length === 0 ? (
-            <p className="text-gray-400 text-center py-4">暂无配置</p>
-          ) : (
-            <div className="space-y-3">
-              {configs?.map((config) => (
-                <div
-                  key={config.id}
-                  className="p-4 bg-gray-700/50 rounded-lg flex items-center justify-between group"
-                >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{config.provider}</span>
-                      {config.is_active && (
-                        <span className="px-1.5 py-0.5 bg-green-900/50 text-green-400 rounded text-xs">
-                          启用
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-400">
-                      {config.model || config.endpoint || '默认配置'}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {config.has_api_key ? '已配置 API Key' : '未配置 API Key'}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (confirm('确定要删除此配置吗？')) {
-                        deleteMutation.mutate(config.id)
-                      }
-                    }}
-                    className="p-2 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <button className="flex items-center justify-center gap-2 rounded-lg h-12 px-6 bg-primary hover:bg-primary/90 text-white text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95">
+          <span className="material-symbols-outlined text-[20px]">save</span>
+          <span>Save All Changes</span>
+        </button>
       </div>
 
-      {/* Add Config Modal */}
-      <Modal
-        isOpen={isAddModalOpen}
-        onClose={() => {
-          setIsAddModalOpen(false)
-          setTestResult(null)
-        }}
-        title="添加服务配置"
-        size="lg"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="label">服务商 *</label>
-            <select
-              className="input"
-              value={newConfig.provider}
-              onChange={(e) => {
-                const provider = providers?.find((p) => p.name === e.target.value)
-                setNewConfig({
-                  ...newConfig,
-                  provider: e.target.value,
-                  endpoint: provider?.default_endpoint || '',
-                })
-                setTestResult(null)
-              }}
-            >
-              <option value="">选择服务商</option>
-              {providers?.map((p) => (
-                <option key={p.id} value={p.name}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="label">API Key *</label>
-            <input
-              type="password"
-              className="input"
-              placeholder="输入 API Key"
-              value={newConfig.api_key}
-              onChange={(e) => {
-                setNewConfig({ ...newConfig, api_key: e.target.value })
-                setTestResult(null)
-              }}
-            />
-          </div>
-
-          <div>
-            <label className="label">API 端点</label>
-            <input
-              type="text"
-              className="input"
-              placeholder={selectedProvider?.default_endpoint || '使用默认端点'}
-              value={newConfig.endpoint}
-              onChange={(e) => setNewConfig({ ...newConfig, endpoint: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="label">模型</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="模型名称（可选）"
-              value={newConfig.model}
-              onChange={(e) => setNewConfig({ ...newConfig, model: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="label">优先级</label>
-            <input
-              type="number"
-              className="input"
-              min={1}
-              max={100}
-              value={newConfig.priority}
-              onChange={(e) => setNewConfig({ ...newConfig, priority: parseInt(e.target.value) || 1 })}
-            />
-            <p className="text-xs text-gray-500 mt-1">数字越大优先级越高</p>
-          </div>
-
-          {/* Test Result */}
-          {testResult && (
-            <div
-              className={`p-3 rounded-lg flex items-center gap-2 ${
-                testResult.success
-                  ? 'bg-green-900/30 border border-green-700'
-                  : 'bg-red-900/30 border border-red-700'
-              }`}
-            >
-              {testResult.success ? (
-                <Check className="w-5 h-5 text-green-400" />
-              ) : (
-                <X className="w-5 h-5 text-red-400" />
-              )}
-              <span className={testResult.success ? 'text-green-400' : 'text-red-400'}>
-                {testResult.message}
-              </span>
+      <div className="grid grid-cols-1 gap-6">
+        {/* LLM Card */}
+        <div className="bg-surface-dark border border-border-dark rounded-xl p-6 flex flex-col gap-6 shadow-sm">
+          <div className="flex items-center gap-3 border-b border-border-dark pb-4">
+            <div className="p-2 bg-purple-500/10 rounded-lg text-purple-400">
+              <span className="material-symbols-outlined">psychology</span>
             </div>
-          )}
+            <div>
+              <h3 className="text-lg font-bold text-white">LLM Services</h3>
+              <p className="text-xs text-text-secondary">Text generation & reasoning engines</p>
+            </div>
+          </div>
+          
+          {/* OpenAI */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm">OpenAI</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">Active</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span className="text-xs text-green-400 font-medium">Connected</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">API Key</label>
+              <div className="relative">
+                <input className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-mono" placeholder="sk-..." type="password" defaultValue="sk-proj-**********************"/>
+                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-white">
+                  <span className="material-symbols-outlined text-lg">visibility_off</span>
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2 space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">Model</label>
+                <div className="relative">
+                  <select className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary appearance-none cursor-pointer">
+                    <option>gpt-4o</option>
+                    <option>gpt-4-turbo</option>
+                    <option>gpt-3.5-turbo</option>
+                  </select>
+                  <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none text-lg">expand_more</span>
+                </div>
+              </div>
+              <div className="flex items-end">
+                <button className="w-full h-[42px] flex items-center justify-center gap-2 rounded-lg border border-border-dark hover:bg-border-dark text-white text-xs font-bold transition-colors">
+                  <span className="material-symbols-outlined text-base">wifi</span>
+                  Test
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div className="h-px bg-border-dark w-full"></div>
 
-          <div className="flex justify-between pt-4">
-            <button
-              onClick={handleTest}
-              disabled={!newConfig.provider || !newConfig.api_key || testMutation.isPending}
-              className="btn btn-secondary flex items-center gap-2"
-            >
-              {testMutation.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : null}
-              测试连接
-            </button>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setIsAddModalOpen(false)
-                  setTestResult(null)
-                }}
-                className="btn btn-secondary"
-              >
-                取消
-              </button>
-              <button
-                onClick={() => createMutation.mutate(newConfig)}
-                disabled={!newConfig.provider || !newConfig.api_key || createMutation.isPending}
-                className="btn btn-primary disabled:opacity-50"
-              >
-                {createMutation.isPending ? '保存中...' : '保存'}
+          {/* DeepSeek */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm">DeepSeek</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-red-500"></span>
+                <span className="text-xs text-red-400 font-medium">Auth Error</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">API Key</label>
+              <div className="relative">
+                <input className="w-full bg-background-dark border border-red-500/50 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 font-mono" placeholder="ds-..." type="password"/>
+                <button className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-white">
+                  <span className="material-symbols-outlined text-lg">visibility_off</span>
+                </button>
+              </div>
+            </div>
+            <div className="flex items-end justify-end">
+              <button className="w-1/3 h-[42px] flex items-center justify-center gap-2 rounded-lg border border-border-dark hover:bg-border-dark text-white text-xs font-bold transition-colors">
+                <span className="material-symbols-outlined text-base">refresh</span>
+                Retry
               </button>
             </div>
           </div>
         </div>
-      </Modal>
+
+        {/* Image Gen Card */}
+        <div className="bg-surface-dark border border-border-dark rounded-xl p-6 flex flex-col gap-6 shadow-sm">
+          <div className="flex items-center gap-3 border-b border-border-dark pb-4">
+            <div className="p-2 bg-pink-500/10 rounded-lg text-pink-400">
+              <span className="material-symbols-outlined">palette</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Image Synthesis</h3>
+              <p className="text-xs text-text-secondary">Visual content generation</p>
+            </div>
+          </div>
+          {/* ComfyUI */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm">ComfyUI (Local/Remote)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                <span className="text-xs text-green-400 font-medium">WS Connected</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">Host URL</label>
+              <div className="relative">
+                <input className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-mono" placeholder="http://..." type="text" defaultValue="http://127.0.0.1:8188"/>
+                <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-lg">check_circle</span>
+              </div>
+            </div>
+            <div className="p-4 rounded-lg bg-background-dark border border-border-dark flex flex-col gap-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-white">Workflow Status</span>
+                <span className="text-xs text-text-secondary">Default_Manga_v2.json</span>
+              </div>
+              <div className="w-full bg-border-dark rounded-full h-1.5">
+                <div className="bg-primary h-1.5 rounded-full" style={{ width: '100%' }}></div>
+              </div>
+              <div className="flex justify-between text-[10px] text-text-secondary">
+                <span>Nodes Loaded: 42</span>
+                <span>GPU: Ready</span>
+              </div>
+            </div>
+            <div className="flex items-end justify-end pt-2">
+              <button className="w-full md:w-auto px-6 h-[42px] flex items-center justify-center gap-2 rounded-lg border border-border-dark hover:bg-border-dark text-white text-xs font-bold transition-colors">
+                <span className="material-symbols-outlined text-base">settings_ethernet</span>
+                Test WebSocket
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Video Gen Card */}
+        <div className="bg-surface-dark border border-border-dark rounded-xl p-6 flex flex-col gap-6 shadow-sm">
+          <div className="flex items-center gap-3 border-b border-border-dark pb-4">
+            <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+              <span className="material-symbols-outlined">movie</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">Video Rendering</h3>
+              <p className="text-xs text-text-secondary">Motion & animation models</p>
+            </div>
+          </div>
+          {/* Kling */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm">Kling AI</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-gray-600"></span>
+                <span className="text-xs text-text-secondary font-medium">Not Configured</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">Access Token</label>
+              <input className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-mono" placeholder="Paste your Kling token here..." type="password"/>
+            </div>
+          </div>
+          <div className="h-px bg-border-dark w-full"></div>
+          {/* Runway */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm">Runway Gen-3</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-green-500"></span>
+                <span className="text-xs text-green-400 font-medium">Ready</span>
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">API Secret</label>
+              <div className="flex gap-2">
+                <input className="flex-1 bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-mono" placeholder="key_..." type="password" defaultValue="rwy_****************"/>
+                <button className="h-[42px] px-4 flex items-center justify-center gap-2 rounded-lg border border-border-dark hover:bg-border-dark text-white text-xs font-bold transition-colors">
+                  <span className="material-symbols-outlined text-base">wifi</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
     </div>
   )
 }

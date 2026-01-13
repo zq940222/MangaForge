@@ -1,5 +1,4 @@
 import { ReactNode, useEffect } from 'react'
-import { X } from 'lucide-react'
 import { clsx } from 'clsx'
 
 interface ModalProps {
@@ -47,23 +46,23 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       {/* Modal */}
       <div
         className={clsx(
-          'relative w-full bg-gray-800 rounded-xl shadow-xl border border-gray-700',
+          'relative w-full bg-surface-dark rounded-xl shadow-2xl border border-border-dark',
           sizeClasses[size]
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-700">
-          <h2 className="text-lg font-semibold">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border-dark">
+          <h2 className="text-lg font-bold text-white">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-white transition-colors"
+            className="p-1 text-text-secondary hover:text-white transition-colors"
           >
-            <X className="w-5 h-5" />
+            <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
         {/* Content */}
-        <div className="px-6 py-4">{children}</div>
+        <div className="px-6 py-4 text-white">{children}</div>
       </div>
     </div>
   )

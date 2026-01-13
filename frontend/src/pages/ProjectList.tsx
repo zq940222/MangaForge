@@ -1,248 +1,96 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
-import { Plus, Trash2, MoreVertical, FolderOpen } from 'lucide-react'
-import { projectsApi, ProjectCreate } from '../api/projects'
-import { LoadingSpinner } from '../components/common/LoadingSpinner'
-import { Modal } from '../components/common/Modal'
+import { Link } from 'react-router-dom';
 
 export function ProjectList() {
-  const [page, setPage] = useState(1)
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [newProject, setNewProject] = useState<ProjectCreate>({
-    title: '',
-    description: '',
-    style: 'anime',
-    target_platform: 'douyin',
-    aspect_ratio: '9:16',
-  })
-
-  const queryClient = useQueryClient()
-
-  const { data, isLoading } = useQuery({
-    queryKey: ['projects', page, 20],
-    queryFn: () => projectsApi.list(page, 20),
-  })
-
-  const createMutation = useMutation({
-    mutationFn: (data: ProjectCreate) => projectsApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-      setIsCreateModalOpen(false)
-      setNewProject({
-        title: '',
-        description: '',
-        style: 'anime',
-        target_platform: 'douyin',
-        aspect_ratio: '9:16',
-      })
-    },
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => projectsApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] })
-    },
-  })
-
-  const handleCreate = () => {
-    if (newProject.title.trim()) {
-      createMutation.mutate(newProject)
-    }
-  }
+  const projects = [
+    { id: 1, title: "Cyberpunk Samurai Ep.1", status: "DONE", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDSbtyBBOox00K5l2Zgq0QOLh85mI_e0sgzcjlvFeiEOQbLCGEMJyFzEz88WZsNIZrVQLimXJ-36Qu2MzOU1Zmr9XIQF-7_GqQ4Y9iiNTucO6MDyegYAPgFtGdsArhek4amFOB24aTZhvhmICDtzXT_gKn2sjtVUpzJIJ4YSwhPd3YrM2a3svJpowkmGxsn-aF6yntGXQqu47Nm3MYiccl_ztp243VUnO6PUSwbqUXk3RUGepw1fV4_1iZSo_F1Q6uhD-UwUAeYWfqx", time: "Edited 2h ago" },
+    { id: 2, title: "High School Romance Promo", status: "GENERATING", progress: 60, time: "Rendering..." },
+    { id: 3, title: "Mecha Battle Short", status: "DRAFT", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuBQOCcWygjPkX26V44g7VusRGBemi6mF2UW2JML9UKgDvrNAzi5bcwiMKs3BfgCtijPHgVsaMvhq2zeQM37mS425xj3idDXoqP-54HI4iuoY-aCE3_M1Jtfrd0U57Z3vUdXRUPloB6Eb3tsZ3nUf3Ss3MEGBv3NSugtJ9Lwg2sb7PirYFZAbbqb_aGmnKfZ1rOEf8RPQuMluE97--DZ5kaXxA2EYWYdYnJvl5GQV1EMWh08GP60XBaTJf3hEtB8NiCLxbCK-TiKczqd", time: "Edited yesterday" },
+    { id: 4, title: "Fantasy World Intro", status: "QUEUED", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDW3Ux6HZEkhZY8jdJSmwjbUR7TOm9TXsO87LeKavCtykLt__MRGGN4txspUAFZ5LtZHr1v3NPuk_35tiB-QezisArDwng8FJA0OSPuObHnuy4drszYuuFcq5E0DZw73-LUO4_pMRoWO4BO9hdT9Kf6_CKzoQx6UiGV9lZvxXCiIojyUOgZ19TqIOUi7j9KOvZY5kHKnY0U1_av5xcFz99hIU-oZ15Bfl3EepcXfrlD5CHzCVe0Sc0N2Rt5S81rdP2VddYNc24orgAO", time: "Waiting for agent..." },
+    { id: 5, title: "Space Opera", status: "DRAFT", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuAQvaBgyu0utfp6-7Lz6TOUhlrXEoylCV_4O9FOVg5MO5PL_XGiIRYdnbPCyPrpaMaIu80-Vo2L90FTiCOep9VlQsXSbihuNLC4BHHPFj-x2nuhAMMhI3MJk6SwvDk5-nkEZfGkd7pT2vn6po4d7eziR0cjZAZOqaPA5SQTuPlRKbQ-hSXMA5TpEWNiAK9RhwBrfsvtd_Jq6gExkbDZdZKrz_Oh3N4ciuBp01UyMiDN1iq1-SdivcMbrEoBIpuRoLYXfG5OoWmoOEvA", time: "Edited 3 days ago" },
+  ];
 
   return (
-    <div className="space-y-6">
+    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8">
+    <div className="max-w-[1400px] mx-auto flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">项目列表</h1>
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="btn btn-primary flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          新建项目
-        </button>
+        <h1 className="text-3xl font-bold text-white tracking-tight">My Projects</h1>
+        <div className="flex gap-2">
+            <button className="px-4 py-2 bg-surface-dark border border-border-dark rounded-lg text-sm font-medium hover:bg-border-dark transition-colors">Filter</button>
+            <button className="px-4 py-2 bg-surface-dark border border-border-dark rounded-lg text-sm font-medium hover:bg-border-dark transition-colors">Sort</button>
+        </div>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <LoadingSpinner size="lg" />
-        </div>
-      ) : data?.items.length === 0 ? (
-        <div className="card text-center py-12">
-          <FolderOpen className="w-16 h-16 mx-auto mb-4 text-gray-600" />
-          <h3 className="text-lg font-medium mb-2">暂无项目</h3>
-          <p className="text-gray-400 mb-4">创建您的第一个 AI 漫剧项目</p>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="btn btn-primary"
-          >
-            创建项目
-          </button>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {data?.items.map((project) => (
-              <div key={project.id} className="card group relative">
-                <Link to={`/projects/${project.id}`} className="block">
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold truncate pr-8">{project.title}</h3>
-                    <span
-                      className={`px-2 py-0.5 rounded text-xs shrink-0 ${
-                        project.status === 'completed'
-                          ? 'bg-green-900/50 text-green-400'
-                          : project.status === 'processing'
-                          ? 'bg-yellow-900/50 text-yellow-400'
-                          : 'bg-gray-600 text-gray-300'
-                      }`}
-                    >
-                      {project.status === 'draft' ? '草稿' :
-                       project.status === 'processing' ? '处理中' :
-                       project.status === 'completed' ? '已完成' : project.status}
-                    </span>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {projects.map((project) => (
+          <Link to={`/projects/${project.id}`} key={project.id}>
+             {project.status === 'GENERATING' ? (
+                <div className="group relative flex flex-col gap-3 rounded-xl bg-surface-dark p-3 border border-primary/40 shadow-[0_0_15px_rgba(19,91,236,0.1)] transition-all cursor-pointer h-full">
+                <div className="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-gray-900 border border-primary/20">
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f1115] relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent animate-pulse"></div>
+                    <div className="loader mb-3"></div>
+                    <p className="text-primary text-xs font-medium animate-pulse">Rendering...</p>
                   </div>
-                  <p className="text-sm text-gray-400 line-clamp-2 mb-4">
-                    {project.description || '暂无描述'}
-                  </p>
-                  <div className="flex items-center gap-4 text-sm text-gray-500">
-                    <span>{project.episodes_count} 集</span>
-                    <span>{project.characters_count} 角色</span>
-                    <span>{project.style}</span>
+                  <div className="absolute top-2 right-2 bg-primary/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[10px] animate-spin">sync</span>
+                    {project.progress}%
                   </div>
-                </Link>
-
-                <button
-                  onClick={(e) => {
-                    e.preventDefault()
-                    if (confirm('确定要删除这个项目吗？')) {
-                      deleteMutation.mutate(project.id)
-                    }
-                  }}
-                  className="absolute top-4 right-4 p-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                </div>
+                <div className="flex flex-col gap-0.5 px-1">
+                  <h3 className="text-white text-sm font-bold truncate">{project.title}</h3>
+                  <div className="w-full bg-[#2d3340] h-1 rounded-full mt-1">
+                    <div className="bg-primary h-full rounded-full" style={{ width: `${project.progress}%` }}></div>
+                  </div>
+                </div>
               </div>
-            ))}
-          </div>
+             ) : (
+                <div className="group relative flex flex-col gap-3 rounded-xl bg-surface-dark p-3 border border-border-dark hover:border-primary/50 transition-all cursor-pointer h-full">
+                <div className="relative w-full aspect-[9/16] rounded-lg overflow-hidden bg-gray-800">
+                    <img alt={project.title} className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${project.status === 'DRAFT' ? 'opacity-60 grayscale group-hover:grayscale-0 group-hover:opacity-100' : ''}`} src={project.image} />
+                    
+                    {project.status === 'DONE' && (
+                        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded border border-white/10 flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                        DONE
+                        </div>
+                    )}
+                    {project.status === 'DRAFT' && (
+                        <div className="absolute top-2 right-2 bg-gray-700/80 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded border border-white/10">
+                            DRAFT
+                        </div>
+                    )}
+                    {project.status === 'QUEUED' && (
+                        <div className="absolute top-2 right-2 bg-amber-500/80 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded border border-white/10 flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[10px]">hourglass_empty</span>
+                            QUEUED
+                        </div>
+                    )}
 
-          {/* Pagination */}
-          {data && data.total_pages > 1 && (
-            <div className="flex justify-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="btn btn-secondary disabled:opacity-50"
-              >
-                上一页
-              </button>
-              <span className="px-4 py-2 text-gray-400">
-                {page} / {data.total_pages}
-              </span>
-              <button
-                onClick={() => setPage((p) => Math.min(data.total_pages, p + 1))}
-                disabled={page === data.total_pages}
-                className="btn btn-secondary disabled:opacity-50"
-              >
-                下一页
-              </button>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
+                    <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button className="p-1.5 bg-white text-black rounded-full hover:bg-gray-200">
+                        <span className="material-symbols-outlined text-[16px]">play_arrow</span>
+                    </button>
+                    </div>
+                </div>
+                <div className="flex flex-col gap-0.5 px-1">
+                    <h3 className="text-white text-sm font-bold truncate group-hover:text-primary transition-colors">{project.title}</h3>
+                    <p className="text-text-secondary text-xs">{project.time}</p>
+                </div>
+                </div>
+             )}
+          </Link>
+        ))}
+        
+        {/* Create New Card */}
+        <button className="group flex flex-col items-center justify-center gap-3 rounded-xl bg-[#151a23] border-2 border-dashed border-border-dark hover:border-primary/50 hover:bg-surface-dark transition-all cursor-pointer h-full min-h-[300px]">
+            <div className="w-12 h-12 rounded-full bg-surface-dark group-hover:bg-primary/20 flex items-center justify-center transition-colors">
+                <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-3xl">add</span>
             </div>
-          )}
-        </>
-      )}
-
-      {/* Create Modal */}
-      <Modal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        title="新建项目"
-        size="lg"
-      >
-        <div className="space-y-4">
-          <div>
-            <label className="label">项目名称 *</label>
-            <input
-              type="text"
-              className="input"
-              placeholder="输入项目名称"
-              value={newProject.title}
-              onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="label">描述</label>
-            <textarea
-              className="input resize-none"
-              rows={3}
-              placeholder="项目描述（可选）"
-              value={newProject.description}
-              onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label">风格</label>
-              <select
-                className="input"
-                value={newProject.style}
-                onChange={(e) => setNewProject({ ...newProject, style: e.target.value })}
-              >
-                <option value="anime">动漫风</option>
-                <option value="realistic">写实风</option>
-                <option value="cartoon">卡通风</option>
-                <option value="watercolor">水彩风</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="label">目标平台</label>
-              <select
-                className="input"
-                value={newProject.target_platform}
-                onChange={(e) => setNewProject({ ...newProject, target_platform: e.target.value })}
-              >
-                <option value="douyin">抖音</option>
-                <option value="kuaishou">快手</option>
-                <option value="bilibili">B站</option>
-                <option value="youtube">YouTube</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="label">画面比例</label>
-            <select
-              className="input"
-              value={newProject.aspect_ratio}
-              onChange={(e) => setNewProject({ ...newProject, aspect_ratio: e.target.value })}
-            >
-              <option value="9:16">9:16 (竖屏)</option>
-              <option value="16:9">16:9 (横屏)</option>
-              <option value="1:1">1:1 (方形)</option>
-            </select>
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              onClick={() => setIsCreateModalOpen(false)}
-              className="btn btn-secondary"
-            >
-              取消
-            </button>
-            <button
-              onClick={handleCreate}
-              disabled={!newProject.title.trim() || createMutation.isPending}
-              className="btn btn-primary disabled:opacity-50"
-            >
-              {createMutation.isPending ? '创建中...' : '创建'}
-            </button>
-          </div>
-        </div>
-      </Modal>
+            <span className="text-sm font-bold text-text-secondary group-hover:text-white">Create New Project</span>
+        </button>
+      </div>
+    </div>
     </div>
   )
 }
