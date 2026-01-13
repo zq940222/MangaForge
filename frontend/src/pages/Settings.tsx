@@ -205,6 +205,81 @@ export function Settings() {
           </div>
         </div>
 
+        {/* Priority / Fallback Section */}
+        <div className="bg-surface-dark border border-border-dark rounded-xl p-6">
+          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-border-dark pb-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/5 rounded-lg text-white">
+                <span className="material-symbols-outlined">tune</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Model Priority Strategy</h3>
+                <p className="text-xs text-text-secondary">Drag to reorder fallback preference when primary services fail</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 bg-background-dark rounded-lg p-1 border border-border-dark">
+              <button className="px-3 py-1.5 rounded bg-primary text-white text-xs font-bold">Manual</button>
+              <button className="px-3 py-1.5 rounded hover:bg-white/5 text-text-secondary hover:text-white text-xs font-bold transition-colors">Auto-Optimize</button>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {/* Item 1 */}
+            <div className="group flex items-center gap-4 bg-background-dark border border-border-dark hover:border-primary/50 p-3 rounded-lg cursor-grab active:cursor-grabbing transition-all">
+              <span className="material-symbols-outlined text-text-secondary group-hover:text-white">drag_indicator</span>
+              <div className="h-8 w-8 rounded bg-green-500/20 text-green-500 flex items-center justify-center font-bold text-xs">1</div>
+              <div className="flex flex-col flex-1">
+                <span className="text-sm font-bold text-white">OpenAI (GPT-4o)</span>
+                <span className="text-[10px] text-text-secondary">Primary Reasoning Engine</span>
+              </div>
+              <div className="flex items-center gap-4 pr-2">
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] text-text-secondary">Latency</span>
+                  <span className="text-xs font-mono text-green-400">240ms</span>
+                </div>
+                <div className="relative inline-flex h-5 w-9 items-center rounded-full bg-primary">
+                  <span className="inline-block h-3 w-3 transform rounded-full bg-white transition translate-x-5"></span>
+                </div>
+              </div>
+            </div>
+            {/* Item 2 */}
+            <div className="group flex items-center gap-4 bg-background-dark border border-border-dark hover:border-primary/50 p-3 rounded-lg cursor-grab active:cursor-grabbing transition-all">
+              <span className="material-symbols-outlined text-text-secondary group-hover:text-white">drag_indicator</span>
+              <div className="h-8 w-8 rounded bg-border-dark text-text-secondary flex items-center justify-center font-bold text-xs">2</div>
+              <div className="flex flex-col flex-1">
+                <span className="text-sm font-bold text-white">DeepSeek V2</span>
+                <span className="text-[10px] text-text-secondary">Fallback / Specialized Tasks</span>
+              </div>
+              <div className="flex items-center gap-4 pr-2">
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] text-text-secondary">Latency</span>
+                  <span className="text-xs font-mono text-yellow-400">890ms</span>
+                </div>
+                <div className="relative inline-flex h-5 w-9 items-center rounded-full bg-primary">
+                  <span className="inline-block h-3 w-3 transform rounded-full bg-white transition translate-x-5"></span>
+                </div>
+              </div>
+            </div>
+            {/* Item 3 */}
+            <div className="group flex items-center gap-4 bg-background-dark border border-border-dark hover:border-primary/50 p-3 rounded-lg cursor-grab active:cursor-grabbing transition-all opacity-70">
+              <span className="material-symbols-outlined text-text-secondary group-hover:text-white">drag_indicator</span>
+              <div className="h-8 w-8 rounded bg-border-dark text-text-secondary flex items-center justify-center font-bold text-xs">3</div>
+              <div className="flex flex-col flex-1">
+                <span className="text-sm font-bold text-text-secondary">Local LLM (Llama 3)</span>
+                <span className="text-[10px] text-text-secondary">Offline Failover</span>
+              </div>
+              <div className="flex items-center gap-4 pr-2">
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] text-text-secondary">Status</span>
+                  <span className="text-xs font-mono text-text-secondary">Offline</span>
+                </div>
+                <div className="relative inline-flex h-5 w-9 items-center rounded-full bg-border-dark">
+                  <span className="inline-block h-3 w-3 transform rounded-full bg-text-secondary transition translate-x-1"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
     </div>

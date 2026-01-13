@@ -1,10 +1,124 @@
 import { Header } from '../components/layout/Header'
+import { useState } from 'react'
 
 // This will act as our "Project Detail" page for now, but really it's the Editor Workspace.
 // In the future, Project Detail might be a dashboard for the project, and this would be /editor
 export function Generation() {
+  const [isPublishDrawerOpen, setIsPublishDrawerOpen] = useState(false);
+
   return (
-    <div className="flex-1 flex overflow-hidden">
+    <div className="flex-1 flex overflow-hidden relative">
+        {/* Quick Publish Drawer */}
+        {isPublishDrawerOpen && (
+            <div className="absolute inset-0 z-50 bg-black/50 backdrop-blur-sm flex justify-end transition-opacity">
+                <div className="w-[400px] h-full bg-[#101622] border-l border-[#282e39] shadow-2xl flex flex-col animate-[slideIn_0.3s_ease-out]">
+                    <div className="px-6 py-4 border-b border-[#282e39] flex items-center justify-between bg-[#15191f]">
+                        <div>
+                            <h2 className="text-white font-bold text-lg flex items-center gap-2">
+                                <span className="material-symbols-outlined text-purple-500">rocket_launch</span>
+                                One-Click Publish
+                            </h2>
+                            <p className="text-[#9da6b9] text-xs mt-0.5">Distribute to authorized platforms</p>
+                        </div>
+                        <button 
+                            onClick={() => setIsPublishDrawerOpen(false)}
+                            className="text-[#9da6b9] hover:text-white transition-colors rounded-full hover:bg-white/10 p-1"
+                        >
+                            <span className="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                        <div className="bg-[#1c1f27] rounded-xl p-3 border border-[#282e39] flex gap-4 hover:border-border-dark/80 transition-colors">
+                            <div className="w-24 aspect-[9/16] bg-black rounded-lg overflow-hidden relative shrink-0">
+                                <div className="absolute inset-0 bg-cover bg-center opacity-80" style={{backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAQvaBgyu0utfp6-7Lz6TOUhlrXEoylCV_4O9FOVg5MO5PL_XGiIRYdnbPCyPrpaMaIu80-Vo2L90FTiCOep9VlQsXSbihuNLC4BHHPFj-x2nuhAMMhI3MJk6SwvDk5-nkEZfGkd7pT2vn6po4d7eziR0cjZAZOqaPA5SQTuPlRKbQ-hSXMA5TpEWNiAK9RhwBrfsvtd_Jq6gExkbDZdZKrz_Oh3N4ciuBp01UyMiDN1iq1-SdivcMbrEoBIpuRoLYXfG5OoWmoOEvA")', filter: 'brightness(0.9)'}}></div>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-white/90 text-2xl drop-shadow-md">play_circle</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col justify-center gap-1 min-w-0">
+                                <h4 className="text-white text-sm font-bold truncate">Cyber-Samurai Ep. 1.mp4</h4>
+                                <p className="text-[#9da6b9] text-xs">00:45 • 1080p • 60fps</p>
+                                <span className="inline-flex items-center gap-1 text-green-400 text-xs mt-1 bg-green-400/10 px-2 py-0.5 rounded w-fit border border-green-400/20">
+                                    <span className="material-symbols-outlined text-[14px]">check_circle</span> Ready
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-[#9da6b9] text-xs font-bold uppercase tracking-wider block mb-3">Target Platforms</label>
+                            <div className="grid grid-cols-3 gap-3">
+                                <button className="group flex flex-col items-center gap-2 p-3 rounded-xl border border-pink-500/50 bg-pink-500/10 hover:bg-pink-500/20 transition-all relative">
+                                    <div className="absolute top-1.5 right-1.5 text-pink-500">
+                                        <span className="material-symbols-outlined text-[16px] icon-filled">check_circle</span>
+                                    </div>
+                                    <div className="w-10 h-10 rounded-full bg-pink-500 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                                        <span className="material-symbols-outlined">live_tv</span>
+                                    </div>
+                                    <span className="text-xs font-medium text-pink-200">Bilibili</span>
+                                </button>
+                                <button className="group flex flex-col items-center gap-2 p-3 rounded-xl border border-[#282e39] bg-[#1c1f27] hover:border-white/30 transition-all relative opacity-60 hover:opacity-100">
+                                    <div className="w-10 h-10 rounded-full bg-black border border-white/20 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                                        <span className="material-symbols-outlined">music_note</span>
+                                    </div>
+                                    <span className="text-xs font-medium text-[#9da6b9] group-hover:text-white">Douyin</span>
+                                </button>
+                                <button className="group flex flex-col items-center gap-2 p-3 rounded-xl border border-[#282e39] bg-[#1c1f27] hover:border-orange-500/50 transition-all relative opacity-60 hover:opacity-100">
+                                    <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform">
+                                        <span className="material-symbols-outlined">videocam</span>
+                                    </div>
+                                    <span className="text-xs font-medium text-[#9da6b9] group-hover:text-white">Kuaishou</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <div className="space-y-1">
+                                <label className="text-[#9da6b9] text-xs font-bold uppercase tracking-wider">Video Title</label>
+                                <input className="w-full bg-[#1c1f27] border border-[#282e39] rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary placeholder-[#9da6b9]/50 transition-colors" type="text" defaultValue="Cyber Samurai: Neon Rain (Ep. 1)"/>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[#9da6b9] text-xs font-bold uppercase tracking-wider">Description</label>
+                                <textarea className="w-full h-24 bg-[#1c1f27] border border-[#282e39] rounded-lg px-3 py-2 text-white text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary placeholder-[#9da6b9]/50 resize-none transition-colors" defaultValue="The rain never stops in sector 7. Follow the journey of the last samurai in a world consumed by neon and steel. #anime #cyberpunk #aiart"></textarea>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[#9da6b9] text-xs font-bold uppercase tracking-wider">Hashtags</label>
+                                <div className="flex flex-wrap gap-2 bg-[#1c1f27] border border-[#282e39] rounded-lg p-2 min-h-[42px] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+                                    <span className="bg-primary/20 text-blue-200 border border-primary/20 text-xs px-2 py-1 rounded flex items-center gap-1">
+                                        #cyberpunk <button className="hover:text-white"><span className="material-symbols-outlined text-[10px]">close</span></button>
+                                    </span>
+                                    <span className="bg-primary/20 text-blue-200 border border-primary/20 text-xs px-2 py-1 rounded flex items-center gap-1">
+                                        #anime <button className="hover:text-white"><span className="material-symbols-outlined text-[10px]">close</span></button>
+                                    </span>
+                                    <input className="bg-transparent border-none outline-none text-white text-xs w-20 p-0 h-5 focus:ring-0 placeholder-[#9da6b9]/50" placeholder="Add tag..." type="text"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="space-y-3 pt-2 border-t border-[#282e39]">
+                            <div className="flex items-center justify-between group cursor-pointer">
+                                <span className="text-sm text-white font-medium group-hover:text-primary transition-colors">Allow Duet / Remix</span>
+                                <button className="w-9 h-5 bg-primary rounded-full relative transition-colors">
+                                    <div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full shadow-sm"></div>
+                                </button>
+                            </div>
+                            <div className="flex items-center justify-between group cursor-pointer">
+                                <span className="text-sm text-white font-medium group-hover:text-primary transition-colors">Save to Device</span>
+                                <button className="w-9 h-5 bg-[#282e39] border border-border-dark rounded-full relative transition-colors">
+                                    <div className="absolute left-1 top-1 w-3 h-3 bg-[#9da6b9] rounded-full shadow-sm"></div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-6 border-t border-[#282e39] bg-[#15191f]">
+                        <button className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl h-12 font-bold text-base shadow-[0_0_20px_rgba(147,51,234,0.4)] transition-all transform active:scale-[0.98]">
+                            <span className="material-symbols-outlined icon-filled">rocket_launch</span>
+                            <span>Publish to Selected (1)</span>
+                        </button>
+                        <p className="text-[10px] text-[#9da6b9] text-center mt-3">
+                            By publishing, you agree to the content policies of selected platforms.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )}
+
         {/* LEFT PANEL: Script Editor */}
         <aside className="w-[340px] flex flex-col border-r border-border-dark bg-background-dark z-10 shrink-0">
             <div className="flex items-center justify-between p-4 pb-2">
@@ -58,6 +172,20 @@ export function Generation() {
                     <span className="text-xs text-text-secondary">Zoom</span>
                     <input className="w-24 h-1 bg-surface-dark rounded-lg appearance-none cursor-pointer accent-primary" type="range"/>
                 </div>
+                {/* Header Action for Quick Publish (Only visible in this context if we want it here, but typically header actions are in the main Header) 
+                    Wait, the design shows this button in the main header in the final screenshot. 
+                    However, `Generation.tsx` does NOT render the main header, it renders inside the Layout.
+                    Let's add a local Quick Publish button here in the Toolbar if we can't easily modify the global header contextually.
+                    Actually, looking at the layout, the global header is above this.
+                    I will add a Quick Publish button to this local toolbar for easy access as well.
+                */}
+                <button 
+                    onClick={() => setIsPublishDrawerOpen(true)}
+                    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold rounded-lg hover:brightness-110 transition-all shadow-lg shadow-purple-500/20"
+                >
+                    <span className="material-symbols-outlined text-[16px]">rocket_launch</span>
+                    Quick Publish
+                </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-8 pb-32 space-y-6">
