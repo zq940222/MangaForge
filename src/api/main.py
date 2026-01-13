@@ -7,6 +7,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config.settings import get_settings
+from src.db.database import init_db, close_db
+from src.db.redis import init_redis, close_redis
 
 settings = get_settings()
 
@@ -16,12 +18,24 @@ async def lifespan(app: FastAPI):
     """Application lifespan management."""
     # Startup
     print(f"Starting {settings.app_name} v{settings.app_version}")
+
     # Initialize database connection pool
+    await init_db()
+    print("Database connection pool initialized")
+
     # Initialize Redis connection
-    # Initialize MinIO client
+    await init_redis()
+    print("Redis connection initialized")
+
+    # MinIO client is initialized on-demand via dependency injection
+
     yield
+
     # Shutdown
     print("Shutting down...")
+    await close_db()
+    await close_redis()
+    print("Cleanup complete")
 
 
 app = FastAPI(
@@ -64,7 +78,15 @@ async def root():
 
 
 # Import and include routers
-# from src.api.routes import projects, characters, generation
-# app.include_router(projects.router, prefix=settings.api_prefix)
-# app.include_router(characters.router, prefix=settings.api_prefix)
-# app.include_router(generation.router, prefix=settings.api_prefix)
+from src.api.routes import projects, characters, episodes, generation, config
+from src.api.websocket import progress as ws_progress
+
+# API routes
+app.include_router(projects.router, prefix=settings.api_prefix)
+app.include_router(characters.router, prefix=settings.api_prefix)
+app.include_router(episodes.router, prefix=settings.api_prefix)
+app.include_router(generation.router, prefix=settings.api_prefix)
+app.include_router(config.router, prefix=settings.api_prefix)
+
+# WebSocket routes
+app.include_router(ws_progress.router, prefix=settings.api_prefix)

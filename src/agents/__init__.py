@@ -1,27 +1,40 @@
 """
 MangaForge Agents Module
 
-This module contains all the AI agents that collaborate to generate manga/comics.
+AI 漫剧生成的核心 Agent 层，使用 LangGraph 编排多个协作 Agent。
 """
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .story_agent import StoryAgent
-    from .character_agent import CharacterAgent
-    from .storyboard_agent import StoryboardAgent
-    from .render_agent import RenderAgent
-    from .dialog_agent import DialogAgent
-    from .animation_agent import AnimationAgent
-    from .voice_agent import VoiceAgent
-    from .export_agent import ExportAgent
+from .base_agent import BaseAgent, AgentState
+from .script_agent import ScriptAgent
+from .character_agent import CharacterAgent
+from .storyboard_agent import StoryboardAgent
+from .render_agent import RenderAgent
+from .video_agent import VideoAgent
+from .voice_agent import VoiceAgent
+from .lipsync_agent import LipsyncAgent
+from .editor_agent import EditorAgent
+from .orchestrator import (
+    MangaForgeOrchestrator,
+    GenerationStage,
+    GenerationProgress,
+    GenerationConfig,
+)
 
 __all__ = [
-    "StoryAgent",
+    # Base
+    "BaseAgent",
+    "AgentState",
+    # Agents
+    "ScriptAgent",
     "CharacterAgent",
     "StoryboardAgent",
     "RenderAgent",
-    "DialogAgent",
-    "AnimationAgent",
+    "VideoAgent",
     "VoiceAgent",
-    "ExportAgent",
+    "LipsyncAgent",
+    "EditorAgent",
+    # Orchestrator
+    "MangaForgeOrchestrator",
+    "GenerationStage",
+    "GenerationProgress",
+    "GenerationConfig",
 ]

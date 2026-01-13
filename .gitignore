@@ -116,3 +116,9 @@ secrets/
 .env.*.local
 docker/prod/.env
 docker/dev/.env
+
+# ===========================================
+# Claude Code
+# ===========================================
+.claude/
+tmpclaude*
