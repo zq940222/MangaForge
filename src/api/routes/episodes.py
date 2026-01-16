@@ -18,6 +18,33 @@ from src.models import Project, Episode, Shot
 router = APIRouter(prefix="/projects/{project_id}/episodes", tags=["episodes"])
 
 
+def _build_episode_response(
+    episode: Episode,
+    shots_count: int = 0,
+    shots: list[ShotResponse] | None = None,
+) -> EpisodeResponse:
+    """构建 Episode 响应对象"""
+    return EpisodeResponse(
+        id=episode.id,
+        project_id=episode.project_id,
+        episode_number=episode.episode_number,
+        title=episode.title,
+        script_input=episode.script_input,
+        script_parsed=episode.script_parsed,
+        storyboard=episode.storyboard,
+        status=episode.status,
+        video_path=episode.video_path,
+        thumbnail_path=episode.thumbnail_path,
+        duration=episode.duration,
+        extra_data=episode.extra_data or {},
+        created_at=episode.created_at,
+        updated_at=episode.updated_at,
+        completed_at=episode.completed_at,
+        shots_count=shots_count,
+        shots=shots or [],
+    )
+
+
 async def _get_project(
     project_id: str,
     user_id: str,
@@ -62,16 +89,7 @@ async def list_episodes(
         shots_count = await db.scalar(
             select(func.count()).where(Shot.episode_id == episode.id)
         ) or 0
-
-        items.append(
-            EpisodeResponse(
-                **{
-                    **episode.__dict__,
-                    "shots_count": shots_count,
-                    "shots": [],
-                }
-            )
-        )
+        items.append(_build_episode_response(episode, shots_count))
 
     return items
 
@@ -111,13 +129,7 @@ async def create_episode(
     await db.flush()
     await db.refresh(episode)
 
-    return EpisodeResponse(
-        **{
-            **episode.__dict__,
-            "shots_count": 0,
-            "shots": [],
-        }
-    )
+    return _build_episode_response(episode, 0)
 
 
 @router.get("/{episode_id}", response_model=EpisodeResponse)
@@ -164,13 +176,7 @@ async def get_episode(
         select(func.count()).where(Shot.episode_id == episode.id)
     ) or 0
 
-    return EpisodeResponse(
-        **{
-            **episode.__dict__,
-            "shots_count": shots_count,
-            "shots": shots,
-        }
-    )
+    return _build_episode_response(episode, shots_count, shots)
 
 
 @router.patch("/{episode_id}", response_model=EpisodeResponse)
@@ -209,13 +215,7 @@ async def update_episode(
         select(func.count()).where(Shot.episode_id == episode.id)
     ) or 0
 
-    return EpisodeResponse(
-        **{
-            **episode.__dict__,
-            "shots_count": shots_count,
-            "shots": [],
-        }
-    )
+    return _build_episode_response(episode, shots_count)
 
 
 @router.delete("/{episode_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -348,12 +348,10 @@ async def expand_script_to_shots(
         )
         shots = shots_result.scalars().all()
 
-        return EpisodeResponse(
-            **{
-                **episode.__dict__,
-                "shots_count": len(shots),
-                "shots": [ShotResponse.model_validate(s) for s in shots],
-            }
+        return _build_episode_response(
+            episode,
+            shots_count=len(shots),
+            shots=[ShotResponse.model_validate(s) for s in shots],
         )
 
     except HTTPException:

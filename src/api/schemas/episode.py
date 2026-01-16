@@ -47,13 +47,15 @@ class EpisodeResponse(BaseModel):
     episode_number: int
     title: Optional[str]
     script_input: Optional[str]
-    parsed_script: Optional[dict[str, Any]]
+    script_parsed: Optional[dict[str, Any]] = None
+    storyboard: Optional[Any] = None  # Can be list or dict
     status: str
     video_path: Optional[str]
     thumbnail_path: Optional[str]
     duration: Optional[int]
-    metadata: dict[str, Any]
+    extra_data: dict[str, Any] = Field(default_factory=dict, alias="metadata")
     created_at: datetime
+    updated_at: datetime
     completed_at: Optional[datetime]
 
     # 关联数据
@@ -62,3 +64,4 @@ class EpisodeResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        populate_by_name = True
