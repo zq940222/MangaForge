@@ -5,8 +5,8 @@
 -- =============================================
 -- Add Gemini Provider
 -- =============================================
-INSERT INTO supported_providers (id, service_type, name, description, is_local, requires_gpu, default_endpoint)
-VALUES ('gemini', 'llm', 'Google Gemini', 'Gemini 2.0/1.5系列', false, false, 'https://generativelanguage.googleapis.com')
+INSERT INTO supported_providers (id, service_type, name, description, is_local, requires_gpu, default_endpoint, config_schema)
+VALUES ('gemini', 'llm', 'Google Gemini', 'Gemini 2.0/1.5系列', false, false, 'https://generativelanguage.googleapis.com', '{}')
 ON CONFLICT (id) DO NOTHING;
 
 -- =============================================
