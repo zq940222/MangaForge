@@ -90,6 +90,7 @@ export function getProviderDisplayInfo(provider: string): {
   const info: Record<string, { name: string; icon: string; iconColor: string }> = {
     openai: { name: 'OpenAI', icon: 'psychology', iconColor: 'text-green-400' },
     anthropic: { name: 'Anthropic', icon: 'smart_toy', iconColor: 'text-orange-400' },
+    gemini: { name: 'Google Gemini', icon: 'diamond', iconColor: 'text-blue-500' },
     deepseek: { name: 'DeepSeek', icon: 'psychology_alt', iconColor: 'text-blue-400' },
     qwen: { name: '通义千问', icon: 'auto_awesome', iconColor: 'text-purple-400' },
     ollama: { name: 'Ollama', icon: 'terminal', iconColor: 'text-slate-400' },

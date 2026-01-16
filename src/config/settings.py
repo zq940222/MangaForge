@@ -67,11 +67,13 @@ class Settings(BaseSettings):
     # ===========================================
     # LLM Configuration
     # ===========================================
-    llm_provider: Literal["openai", "anthropic", "local"] = "anthropic"
+    llm_provider: Literal["openai", "anthropic", "gemini", "local"] = "anthropic"
     openai_api_key: str = ""
     anthropic_api_key: str = ""
+    gemini_api_key: str = ""
     openai_model: str = "gpt-4-turbo-preview"
     anthropic_model: str = "claude-3-5-sonnet-20241022"
+    gemini_model: str = "gemini-2.0-flash-exp"
     local_llm_url: str = "http://localhost:11434"
     local_llm_model: str = "llama3"
 

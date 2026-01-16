@@ -10,6 +10,7 @@ from src.services.base import BaseService, ServiceConfig, ServiceType
 from src.services.llm.base import BaseLLMService
 from src.services.llm.anthropic_service import AnthropicService
 from src.services.llm.openai_service import OpenAIService
+from src.services.llm.gemini_service import GeminiService
 
 # Image Services
 from src.services.image.base import BaseImageService
@@ -34,6 +35,7 @@ SERVICE_REGISTRY: dict[ServiceType, dict[str, Type[BaseService]]] = {
     ServiceType.LLM: {
         "anthropic": AnthropicService,
         "openai": OpenAIService,
+        "gemini": GeminiService,
     },
     ServiceType.IMAGE: {
         "comfyui": ComfyUIService,
@@ -127,6 +129,9 @@ class ServiceFactory:
             elif provider == "openai":
                 config.api_key = self.settings.openai_api_key
                 config.model = self.settings.openai_model
+            elif provider == "gemini":
+                config.api_key = self.settings.gemini_api_key
+                config.model = self.settings.gemini_model
 
         elif service_type == ServiceType.IMAGE:
             if provider == "comfyui":

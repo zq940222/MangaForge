@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { QuickPublishDrawer } from '../components/QuickPublishDrawer'
 import { useEpisode, useUpdateEpisode, useExpandEpisode } from '../hooks/useEpisodes'
 import { useProject } from '../hooks/useProjects'
@@ -8,9 +9,8 @@ import { useGeneration } from '../hooks/useGeneration'
 // This will act as our "Project Detail" page for now, but really it's the Editor Workspace.
 // In the future, Project Detail might be a dashboard for the project, and this would be /editor
 export function Generation() {
-  const [searchParams] = useSearchParams()
-  const projectId = searchParams.get('projectId') || undefined
-  const episodeId = searchParams.get('episodeId') || undefined
+  const { t } = useTranslation()
+  const { projectId, episodeId } = useParams<{ projectId: string; episodeId: string }>()
 
   const { data: project } = useProject(projectId)
   const { data: episode, isLoading: episodeLoading } = useEpisode(projectId, episodeId, true)
@@ -84,17 +84,17 @@ export function Generation() {
         {/* LEFT PANEL: Script Editor */}
         <aside className="w-[340px] flex flex-col border-r border-border-dark bg-background-dark z-10 shrink-0">
             <div className="flex items-center justify-between p-4 pb-2">
-                <h3 className="text-white tracking-light text-xl font-bold leading-tight">Script Editor</h3>
+                <h3 className="text-white tracking-light text-xl font-bold leading-tight">{t('generation.scriptEditor')}</h3>
                 <button className="text-text-secondary hover:text-white"><span className="material-symbols-outlined">dock_to_left</span></button>
             </div>
             <div className="flex flex-col flex-1 overflow-y-auto px-4 py-2 space-y-4">
                 <div className="flex flex-col gap-2">
-                    <label className="text-text-secondary text-xs font-bold uppercase tracking-wider">Story Context / Outline</label>
+                    <label className="text-text-secondary text-xs font-bold uppercase tracking-wider">{t('generation.storyOutline')}</label>
                     <textarea
                       value={scriptInput}
                       onChange={(e) => setScriptInput(e.target.value)}
                       className="form-input w-full resize-none rounded-lg text-white focus:outline-0 focus:ring-1 focus:ring-primary border border-border-dark bg-surface-dark placeholder:text-text-secondary/50 p-3 text-sm font-normal leading-relaxed min-h-[160px]"
-                      placeholder="Enter your story outline here... E.g. A cyberpunk samurai walks through a neon-lit rainstorm looking for the lost chip."
+                      placeholder={t('generation.storyOutlinePlaceholder')}
                     />
                 </div>
                 <button
@@ -105,14 +105,14 @@ export function Generation() {
                     <span className={`material-symbols-outlined text-purple-400 group-hover:text-purple-300 ${expandEpisode.isPending ? 'animate-spin' : ''}`}>
                       {expandEpisode.isPending ? 'progress_activity' : 'auto_awesome'}
                     </span>
-                    <span>{expandEpisode.isPending ? 'Expanding...' : 'Expand Outline to Shots'}</span>
+                    <span>{expandEpisode.isPending ? t('generation.expanding') : t('generation.expandOutline')}</span>
                 </button>
                 <div className="w-full h-px bg-border-dark my-2"></div>
                 <div className="flex flex-col gap-2">
-                    <label className="text-text-secondary text-xs font-bold uppercase tracking-wider mb-1">Scene Breakdown</label>
+                    <label className="text-text-secondary text-xs font-bold uppercase tracking-wider mb-1">{t('generation.sceneBreakdown')}</label>
                     {shots.length === 0 ? (
                       <div className="text-text-secondary text-sm text-center py-4">
-                        No shots yet. Enter a story outline and click "Expand Outline to Shots".
+                        {t('generation.noShotsYet')}
                       </div>
                     ) : (
                       shots.map((shot, index) => (
@@ -143,13 +143,13 @@ export function Generation() {
         <main className="flex-1 flex flex-col min-w-[500px] bg-[#15191f] relative">
             <div className="h-12 border-b border-border-dark flex items-center justify-between px-4 bg-background-dark/80 backdrop-blur-sm sticky top-0 z-10">
                 <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-white mr-4">Timeline</h3>
+                    <h3 className="text-sm font-bold text-white mr-4">{t('generation.timeline')}</h3>
                     <button className="p-1.5 rounded hover:bg-surface-dark text-white"><span className="material-symbols-outlined">add_circle</span></button>
                     <button className="p-1.5 rounded hover:bg-surface-dark text-text-secondary hover:text-white"><span className="material-symbols-outlined">content_cut</span></button>
                     <button className="p-1.5 rounded hover:bg-surface-dark text-text-secondary hover:text-white"><span className="material-symbols-outlined">delete</span></button>
                 </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-xs text-text-secondary">Zoom</span>
+                    <span className="text-xs text-text-secondary">{t('generation.zoom')}</span>
                     <input className="w-24 h-1 bg-surface-dark rounded-lg appearance-none cursor-pointer accent-primary" type="range"/>
                 </div>
                 <button 
@@ -157,7 +157,7 @@ export function Generation() {
                     className="ml-auto flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold rounded-lg hover:brightness-110 transition-all shadow-lg shadow-purple-500/20"
                 >
                     <span className="material-symbols-outlined text-[16px]">rocket_launch</span>
-                    Quick Publish
+                    {t('distribution.quickPublish')}
                 </button>
             </div>
 
@@ -177,7 +177,7 @@ export function Generation() {
                             <div className="absolute bottom-2 right-2 flex gap-1">
                                 <span className="bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-md border border-white/10">00:04s</span>
                                 <span className="bg-primary/80 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-md flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[10px]">videocam</span> Video
+                                    <span className="material-symbols-outlined text-[10px]">videocam</span> {t('assetLibrary.videos')}
                                 </span>
                             </div>
                         </div>
@@ -192,7 +192,7 @@ export function Generation() {
                                 </div>
                                 <div className="bg-background-dark/50 p-2.5 rounded border border-border-dark/50 mb-3">
                                     <p className="text-text-secondary text-xs uppercase font-bold tracking-wider mb-1 flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[12px]">record_voice_over</span> Dialogue
+                                        <span className="material-symbols-outlined text-[12px]">record_voice_over</span> {t('generation.dialogue')}
                                     </p>
                                     <p className="text-gray-300 text-sm italic">"The rain never stops here. It just changes color."</p>
                                 </div>
@@ -220,21 +220,21 @@ export function Generation() {
                     <div className="flex-1 bg-surface-dark rounded-xl border border-border-dark p-1 flex flex-col md:flex-row gap-0 opacity-80 hover:opacity-100 transition-opacity">
                         <div className="w-full md:w-[280px] aspect-video bg-[#15171e] relative flex flex-col items-center justify-center border-r border-border-dark/50">
                             <span className="material-symbols-outlined text-text-secondary/30 text-5xl mb-2">movie_filter</span>
-                            <span className="text-text-secondary/50 text-xs font-medium">Waiting to generate</span>
+                            <span className="text-text-secondary/50 text-xs font-medium">{t('generation.waitingToGenerate')}</span>
                         </div>
                         <div className="flex-1 p-4 flex flex-col gap-3">
                             <div>
                                 <h4 className="text-white font-bold text-sm mb-2">Cu. Boots splashing</h4>
                                 <div className="bg-background-dark/50 p-2.5 rounded border border-border-dark/50">
                                     <p className="text-text-secondary text-xs uppercase font-bold tracking-wider mb-1 flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[12px]">description</span> Prompt
+                                        <span className="material-symbols-outlined text-[12px]">description</span> {t('generation.prompt')}
                                     </p>
                                     <p className="text-gray-400 text-sm">Close up shot, low angle, heavy leather boots stepping into a neon-reflecting puddle, splashes of water, high fidelity, 8k.</p>
                                 </div>
                             </div>
                             <div className="mt-auto flex justify-end">
                                 <button className="flex items-center gap-2 px-3 py-1.5 rounded bg-primary/10 text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">
-                                    <span className="material-symbols-outlined text-[16px]">play_arrow</span> Generate Shot
+                                    <span className="material-symbols-outlined text-[16px]">play_arrow</span> {t('generation.generateShot')}
                                 </button>
                             </div>
                         </div>
@@ -267,11 +267,11 @@ export function Generation() {
             <div className="flex-1 overflow-y-auto p-5 space-y-6">
                 <div>
                     <h3 className="text-white text-base font-bold mb-4 flex items-center gap-2">
-                        <span className="material-symbols-outlined text-primary">psychology</span> Agent Configuration
+                        <span className="material-symbols-outlined text-primary">psychology</span> {t('generation.agentConfiguration')}
                     </h3>
                     {/* Video Model Select */}
                     <div className="space-y-3 mb-6">
-                        <label className="text-text-secondary text-xs font-bold uppercase tracking-wider block">Visual Model</label>
+                        <label className="text-text-secondary text-xs font-bold uppercase tracking-wider block">{t('generation.visualModel')}</label>
                         <div className="relative">
                             <select className="w-full appearance-none bg-surface-dark border border-border-dark text-white text-sm rounded-lg px-3 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none">
                                 <option>Kling Pro v1.5 (Recommended)</option>
@@ -281,12 +281,12 @@ export function Generation() {
                             <span className="material-symbols-outlined absolute right-3 top-2.5 text-text-secondary pointer-events-none text-[20px]">expand_more</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-text-secondary">
-                            <span className="w-2 h-2 rounded-full bg-green-500"></span> Ready to generate
+                            <span className="w-2 h-2 rounded-full bg-green-500"></span> {t('generation.readyToGenerate')}
                         </div>
                     </div>
                     
                     <div className="space-y-3 mb-6">
-                        <label className="text-text-secondary text-xs font-bold uppercase tracking-wider block">Audio / TTS Model</label>
+                        <label className="text-text-secondary text-xs font-bold uppercase tracking-wider block">{t('generation.audioModel')}</label>
                         <div className="relative">
                             <select className="w-full appearance-none bg-surface-dark border border-border-dark text-white text-sm rounded-lg px-3 py-2.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none">
                                 <option>Fish-Speech (Cinematic)</option>
@@ -300,15 +300,15 @@ export function Generation() {
                     <div className="space-y-4 pt-4 border-t border-border-dark/50">
                         <div>
                             <div className="flex justify-between mb-1.5">
-                                <label className="text-text-secondary text-xs font-bold">Motion Scale</label>
+                                <label className="text-text-secondary text-xs font-bold">{t('generation.motionScale')}</label>
                                 <span className="text-white text-xs font-mono">0.75</span>
                             </div>
                             <input className="w-full h-1.5 bg-surface-dark rounded-lg appearance-none cursor-pointer accent-primary" type="range" defaultValue="75"/>
                         </div>
                         <div>
                             <div className="flex justify-between mb-1.5">
-                                <label className="text-text-secondary text-xs font-bold">Creativity</label>
-                                <span className="text-white text-xs font-mono">High</span>
+                                <label className="text-text-secondary text-xs font-bold">{t('generation.creativity')}</label>
+                                <span className="text-white text-xs font-mono">{t('generation.high')}</span>
                             </div>
                             <input className="w-full h-1.5 bg-surface-dark rounded-lg appearance-none cursor-pointer accent-purple-500" type="range" defaultValue="80"/>
                         </div>
@@ -317,27 +317,27 @@ export function Generation() {
                 
                 <div className="bg-primary/5 rounded-lg border border-primary/20 p-4">
                     <div className="flex justify-between items-center mb-2">
-                        <span className="text-white text-sm font-bold">Queue Status</span>
+                        <span className="text-white text-sm font-bold">{t('generation.queueStatus')}</span>
                         <span className={`text-xs font-bold px-2 py-0.5 rounded ${
                           generation.status === 'running'
                             ? 'text-amber-400 bg-amber-400/10'
                             : 'text-primary bg-primary/10'
                         }`}>
-                          {generation.status === 'running' ? 'Generating...' : 'Idle'}
+                          {generation.status === 'running' ? t('generation.generating') : t('generation.idle')}
                         </span>
                     </div>
                     <ul className="space-y-2">
                         <li className="flex justify-between text-xs">
-                            <span className="text-text-secondary">Pending Shots</span>
+                            <span className="text-text-secondary">{t('generation.pendingShots')}</span>
                             <span className="text-white">{shots.filter(s => s.status === 'pending').length || shots.length || 2}</span>
                         </li>
                         <li className="flex justify-between text-xs">
-                            <span className="text-text-secondary">Est. Time</span>
+                            <span className="text-text-secondary">{t('generation.estTime')}</span>
                             <span className="text-white">~{(shots.length || 2) * 20}s</span>
                         </li>
                         <li className="flex justify-between text-xs">
-                            <span className="text-text-secondary">Cost</span>
-                            <span className="text-white">{(shots.length || 2) * 6} credits</span>
+                            <span className="text-text-secondary">{t('generation.cost')}</span>
+                            <span className="text-white">{(shots.length || 2) * 6} {t('generation.credits')}</span>
                         </li>
                     </ul>
                 </div>
@@ -354,8 +354,8 @@ export function Generation() {
                     </span>
                     <span>
                       {generation.status === 'running'
-                        ? `Generating... ${generation.overallProgress}%`
-                        : `Generate All (${shots.length || 2})`}
+                        ? t('generation.generatingProgress', { progress: generation.overallProgress })
+                        : t('generation.generateAllCount', { count: shots.length || 2 })}
                     </span>
                 </button>
             </div>

@@ -327,6 +327,7 @@ INSERT INTO supported_providers (id, service_type, name, description, is_local, 
 -- 大语言模型服务商
 ('openai', 'llm', 'OpenAI', 'GPT-4系列', false, false, 'https://api.openai.com/v1'),
 ('anthropic', 'llm', 'Anthropic', 'Claude系列', false, false, 'https://api.anthropic.com'),
+('gemini', 'llm', 'Google Gemini', 'Gemini 2.0/1.5系列', false, false, 'https://generativelanguage.googleapis.com'),
 ('deepseek', 'llm', 'DeepSeek', '国产大模型', false, false, 'https://api.deepseek.com'),
 ('qwen', 'llm', '通义千问', '阿里大模型', false, false, 'https://dashscope.aliyuncs.com'),
 ('ollama', 'llm', 'Ollama (本地)', '本地运行LLM', true, false, 'http://localhost:11434'),
