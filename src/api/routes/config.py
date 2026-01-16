@@ -91,6 +91,8 @@ async def create_user_config(
     user_id: str = Depends(get_current_user_id),
 ):
     """创建用户配置"""
+    from sqlalchemy import func
+
     # 检查是否已存在相同的配置
     existing = await db.execute(
         select(UserApiConfig).where(
@@ -105,6 +107,20 @@ async def create_user_config(
             detail=f"Config for {data.service_type}/{data.provider} already exists",
         )
 
+    # 如果没有指定优先级，自动分配最低优先级（新添加的配置默认排在最后）
+    priority = data.priority
+    if priority is None or priority == 0:
+        # 获取当前同类型配置的最低优先级
+        max_priority_result = await db.execute(
+            select(func.max(UserApiConfig.priority)).where(
+                UserApiConfig.user_id == user_id,
+                UserApiConfig.service_type == data.service_type,
+            )
+        )
+        max_priority = max_priority_result.scalar() or 0
+        # 新配置的优先级比现有最高的还低（即排在最后）
+        priority = max(0, max_priority - 1) if max_priority > 0 else 0
+
     # TODO: 加密 API Key
     encrypted_key = data.api_key  # 应该使用加密
 
@@ -116,7 +132,7 @@ async def create_user_config(
         endpoint=data.endpoint,
         model=data.model,
         settings=data.settings,
-        priority=data.priority,
+        priority=priority,
     )
 
     db.add(config)

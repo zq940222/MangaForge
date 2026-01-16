@@ -123,8 +123,8 @@ function ProviderCard({
         </div>
       )}
 
-      {/* Model Selection */}
-      {testResult?.available_models && testResult.available_models.length > 0 && (
+      {/* Model Selection - 显示可用模型列表或当前已配置的模型 */}
+      {(testResult?.available_models && testResult.available_models.length > 0) ? (
         <div className="space-y-1">
           <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">{t('settings.model')}</label>
           <div className="relative">
@@ -145,6 +145,26 @@ function ProviderCard({
               expand_more
             </span>
           </div>
+        </div>
+      ) : hasApiKey && (
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">{t('settings.model')}</label>
+          <div className="flex gap-2">
+            <div className="flex-1 bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white">
+              {selectedModel || existingConfig?.model || t('settings.noModelSelected')}
+            </div>
+            <button
+              onClick={() => onTest(provider, apiKey, existingConfig?.id)}
+              disabled={isTesting}
+              className="px-3 py-2 rounded-lg border border-border-dark hover:bg-border-dark text-text-secondary hover:text-white text-xs transition-colors disabled:opacity-50"
+              title={t('settings.refreshModels')}
+            >
+              <span className={`material-symbols-outlined text-base ${isTesting ? 'animate-spin' : ''}`}>
+                {isTesting ? 'progress_activity' : 'refresh'}
+              </span>
+            </button>
+          </div>
+          <p className="text-[10px] text-text-secondary">{t('settings.clickRefreshToChangeModel')}</p>
         </div>
       )}
 
@@ -265,12 +285,80 @@ function ServiceSection({
   )
 }
 
-function PriorityCard({ configs }: { configs: UserConfig[] }) {
+interface PriorityCardProps {
+  configs: UserConfig[]
+  onUpdateConfig: (id: string, data: { is_active?: boolean; priority?: number }) => Promise<void>
+}
+
+function PriorityCard({ configs, onUpdateConfig }: PriorityCardProps) {
   const { t } = useTranslation()
+  const [priorityMode, setPriorityMode] = useState<'manual' | 'auto'>('manual')
+  const [draggedId, setDraggedId] = useState<string | null>(null)
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
+
   // Sort by priority descending
   const sortedConfigs = [...configs]
     .filter(c => c.service_type === 'llm' && c.has_api_key)
     .sort((a, b) => b.priority - a.priority)
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedId(id)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDrop = async (e: React.DragEvent, targetId: string) => {
+    e.preventDefault()
+    if (!draggedId || draggedId === targetId) {
+      setDraggedId(null)
+      return
+    }
+
+    const draggedIndex = sortedConfigs.findIndex(c => c.id === draggedId)
+    const targetIndex = sortedConfigs.findIndex(c => c.id === targetId)
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      setDraggedId(null)
+      return
+    }
+
+    // Calculate new priorities (higher number = higher priority)
+    const newOrder = [...sortedConfigs]
+    const [draggedItem] = newOrder.splice(draggedIndex, 1)
+    newOrder.splice(targetIndex, 0, draggedItem)
+
+    // Update priorities: first item gets highest priority
+    const updates = newOrder.map((config, index) => ({
+      id: config.id,
+      priority: newOrder.length - index, // Reverse: first gets highest
+    }))
+
+    // Apply all priority updates
+    for (const update of updates) {
+      if (update.priority !== sortedConfigs.find(c => c.id === update.id)?.priority) {
+        await onUpdateConfig(update.id, { priority: update.priority })
+      }
+    }
+
+    setDraggedId(null)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedId(null)
+  }
+
+  const handleToggle = async (config: UserConfig) => {
+    setUpdatingId(config.id)
+    try {
+      await onUpdateConfig(config.id, { is_active: !config.is_active })
+    } finally {
+      setUpdatingId(null)
+    }
+  }
 
   return (
     <div className="bg-surface-dark border border-border-dark rounded-xl p-6">
@@ -285,21 +373,38 @@ function PriorityCard({ configs }: { configs: UserConfig[] }) {
           </div>
         </div>
         <div className="flex items-center gap-2 bg-background-dark rounded-lg p-1 border border-border-dark">
-          <button className="px-3 py-1.5 rounded bg-primary text-white text-xs font-bold">{t('settings.manual')}</button>
-          <button className="px-3 py-1.5 rounded hover:bg-white/5 text-text-secondary hover:text-white text-xs font-bold transition-colors">{t('settings.autoOptimize')}</button>
+          <button
+            onClick={() => setPriorityMode('manual')}
+            className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${priorityMode === 'manual' ? 'bg-primary text-white' : 'hover:bg-white/5 text-text-secondary hover:text-white'}`}
+          >
+            {t('settings.manual')}
+          </button>
+          <button
+            onClick={() => setPriorityMode('auto')}
+            className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${priorityMode === 'auto' ? 'bg-primary text-white' : 'hover:bg-white/5 text-text-secondary hover:text-white'}`}
+          >
+            {t('settings.autoOptimize')}
+          </button>
         </div>
       </div>
       <div className="space-y-3">
         {sortedConfigs.map((config, index) => {
           const providerInfo = getProviderDisplayInfo(config.provider)
           const isActive = config.is_active && config.has_api_key
+          const isDragging = draggedId === config.id
+          const isUpdating = updatingId === config.id
 
           return (
             <div
               key={config.id}
-              className={`group flex items-center gap-4 bg-background-dark border border-border-dark hover:border-primary/50 p-3 rounded-lg cursor-grab active:cursor-grabbing transition-all ${!isActive ? 'opacity-70' : ''}`}
+              draggable={priorityMode === 'manual'}
+              onDragStart={(e) => handleDragStart(e, config.id)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, config.id)}
+              onDragEnd={handleDragEnd}
+              className={`group flex items-center gap-4 bg-background-dark border border-border-dark hover:border-primary/50 p-3 rounded-lg transition-all ${!isActive ? 'opacity-70' : ''} ${priorityMode === 'manual' ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'opacity-50 border-primary' : ''}`}
             >
-              <span className="material-symbols-outlined text-text-secondary group-hover:text-white">drag_indicator</span>
+              <span className={`material-symbols-outlined text-text-secondary group-hover:text-white ${priorityMode !== 'manual' ? 'opacity-30' : ''}`}>drag_indicator</span>
               <div className={`h-8 w-8 rounded ${index === 0 && isActive ? 'bg-green-500/20 text-green-500' : 'bg-border-dark text-text-secondary'} flex items-center justify-center font-bold text-xs`}>
                 {index + 1}
               </div>
@@ -318,9 +423,13 @@ function PriorityCard({ configs }: { configs: UserConfig[] }) {
                     {isActive ? t('settings.ready') : t('common.offline')}
                   </span>
                 </div>
-                <div className={`relative inline-flex h-5 w-9 items-center rounded-full ${config.is_active ? 'bg-primary' : 'bg-border-dark'}`}>
+                <button
+                  onClick={() => handleToggle(config)}
+                  disabled={isUpdating}
+                  className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${config.is_active ? 'bg-primary' : 'bg-border-dark'} ${isUpdating ? 'opacity-50' : 'cursor-pointer hover:opacity-80'}`}
+                >
                   <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition ${config.is_active ? 'translate-x-5' : 'translate-x-1'}`}></span>
-                </div>
+                </button>
               </div>
             </div>
           )
@@ -441,6 +550,11 @@ export function Settings() {
   // Service types to display
   const serviceTypes = ['llm', 'image', 'video', 'voice', 'lipsync']
 
+  // Handler for updating config priority and is_active
+  const handleUpdateConfig = async (id: string, data: { is_active?: boolean; priority?: number }) => {
+    await updateConfigMutation.mutateAsync({ id, data })
+  }
+
   const isLoading = configsLoading || providersLoading
 
   return (
@@ -487,7 +601,7 @@ export function Settings() {
             ))}
 
             {/* Priority Card */}
-            <PriorityCard configs={configs || []} />
+            <PriorityCard configs={configs || []} onUpdateConfig={handleUpdateConfig} />
           </div>
         )}
       </div>

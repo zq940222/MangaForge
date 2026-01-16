@@ -217,3 +217,232 @@ def get_service_factory() -> ServiceFactory:
     if _factory is None:
         _factory = ServiceFactory()
     return _factory
+
+
+async def create_llm_service_from_user_config(
+    db,
+    user_id: str,
+    provider: Optional[str] = None,
+) -> Optional[BaseLLMService]:
+    """
+    从数据库用户配置创建LLM服务
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+        provider: 指定提供商（可选，不指定则使用最高优先级）
+
+    Returns:
+        LLM服务实例，如果没有配置则返回None
+    """
+    from src.services.user_config_service import UserConfigService
+
+    config_service = UserConfigService(db, user_id)
+    service_config = await config_service.get_llm_service_config(provider)
+
+    if service_config and service_config.api_key:
+        factory = get_service_factory()
+        return factory.create_service(
+            ServiceType.LLM,
+            service_config.provider,
+            service_config,
+        )
+
+    return None
+
+
+async def get_llm_service_with_fallback(
+    db,
+    user_id: str,
+    provider: Optional[str] = None,
+) -> BaseLLMService:
+    """
+    获取LLM服务，优先使用用户配置，否则回退到环境变量配置
+
+    Args:
+        db: 数据库会话
+        user_id: 用户ID
+        provider: 指定提供商（可选）
+
+    Returns:
+        LLM服务实例
+
+    Raises:
+        ValueError: 如果没有可用的LLM配置
+    """
+    # 1. 尝试从数据库获取用户配置
+    llm_service = await create_llm_service_from_user_config(db, user_id, provider)
+    if llm_service:
+        return llm_service
+
+    # 2. 回退到环境变量配置
+    factory = get_service_factory()
+    try:
+        return factory.get_llm_service(provider)
+    except Exception as e:
+        raise ValueError(
+            f"No LLM service available. Please configure an API key in Settings. Error: {e}"
+        )
+
+
+class LLMServiceWithFallback:
+    """
+    LLM服务包装器，支持自动回退到其他提供商
+
+    当主提供商失败（如速率限制、认证错误）时，自动尝试下一个提供商
+    """
+
+    def __init__(self, services: list[BaseLLMService]):
+        if not services:
+            raise ValueError("At least one LLM service is required")
+        self.services = services
+        self.current_index = 0
+
+    async def generate(self, *args, **kwargs):
+        """尝试生成，失败时自动回退"""
+        last_error = None
+
+        for i, service in enumerate(self.services):
+            try:
+                result = await service.generate(*args, **kwargs)
+                if result.success:
+                    return result
+                # 如果是速率限制或认证错误，尝试下一个
+                error_msg = str(result.error or "").lower()
+                if any(x in error_msg for x in ["rate limit", "quota", "429", "authentication"]):
+                    last_error = result.error
+                    continue
+                return result
+            except Exception as e:
+                last_error = str(e)
+                continue
+
+        # 所有服务都失败
+        from src.services.base import ServiceResult
+        return ServiceResult.fail(f"All LLM providers failed. Last error: {last_error}")
+
+    async def generate_stream(self, *args, **kwargs):
+        """流式生成，失败时自动回退"""
+        last_error = None
+
+        for service in self.services:
+            try:
+                async for chunk in service.generate_stream(*args, **kwargs):
+                    yield chunk
+                return  # 成功完成
+            except Exception as e:
+                last_error = str(e)
+                continue
+
+        raise RuntimeError(f"All LLM providers failed. Last error: {last_error}")
+
+    async def generate_json(self, messages, temperature: float = 0.3, max_tokens: int = 4096, **kwargs):
+        """生成 JSON 格式输出，失败时自动回退"""
+        import json
+        from src.services.base import ServiceResult
+
+        last_error = None
+
+        for i, service in enumerate(self.services):
+            try:
+                result = await service.generate(
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    json_mode=True,
+                    **kwargs,
+                )
+
+                if result.success:
+                    # 解析 JSON
+                    try:
+                        response = result.data
+                        parsed = json.loads(response.content)
+                        return ServiceResult.ok(parsed, {"raw_response": response})
+                    except json.JSONDecodeError as e:
+                        return ServiceResult.fail(f"JSON parse error: {e}")
+
+                # 如果是速率限制或认证错误，尝试下一个
+                error_msg = str(result.error or "").lower()
+                if any(x in error_msg for x in ["rate limit", "quota", "429", "authentication"]):
+                    last_error = result.error
+                    print(f"Provider {i+1} failed with rate limit, trying next...")
+                    continue
+                return result
+            except Exception as e:
+                last_error = str(e)
+                error_lower = str(e).lower()
+                if any(x in error_lower for x in ["rate limit", "quota", "429", "authentication"]):
+                    print(f"Provider {i+1} failed with exception, trying next...")
+                    continue
+                # 其他异常直接返回失败
+                return ServiceResult.fail(f"LLM error: {e}")
+
+        # 所有服务都失败
+        return ServiceResult.fail(f"All LLM providers failed. Last error: {last_error}")
+
+    # 代理其他方法到主服务
+    def __getattr__(self, name):
+        return getattr(self.services[0], name)
+
+
+async def get_llm_services_by_priority(
+    db,
+    user_id: str,
+) -> list[BaseLLMService]:
+    """
+    按优先级获取所有已配置的LLM服务列表
+
+    Returns:
+        按优先级排序的LLM服务列表
+    """
+    from src.services.user_config_service import UserConfigService
+
+    config_service = UserConfigService(db, user_id)
+    configs = await config_service.get_configs_by_type("llm", only_active=True)
+
+    services = []
+    factory = get_service_factory()
+
+    for config in configs:
+        if config.api_key_encrypted:
+            try:
+                service_config = await config_service.to_service_config(config)
+                service = factory.create_service(
+                    ServiceType.LLM,
+                    service_config.provider,
+                    service_config,
+                )
+                services.append(service)
+            except Exception:
+                continue
+
+    return services
+
+
+async def get_llm_service_with_auto_fallback(
+    db,
+    user_id: str,
+) -> LLMServiceWithFallback:
+    """
+    获取带自动回退功能的LLM服务
+
+    当主提供商失败时（如速率限制），自动尝试下一个优先级的提供商
+
+    Returns:
+        LLMServiceWithFallback 实例
+    """
+    services = await get_llm_services_by_priority(db, user_id)
+
+    if not services:
+        # 回退到环境变量配置
+        factory = get_service_factory()
+        try:
+            service = factory.get_llm_service()
+            services = [service]
+        except Exception as e:
+            raise ValueError(
+                f"No LLM service available. Please configure an API key in Settings. Error: {e}"
+            )
+
+    return LLMServiceWithFallback(services)

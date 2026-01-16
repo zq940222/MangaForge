@@ -162,84 +162,146 @@ export function Generation() {
             </div>
 
             <div className="flex-1 overflow-y-auto p-8 pb-32 space-y-6">
-                {/* Shot 1 */}
-                <div className="flex gap-4 group">
-                    <div className="flex flex-col items-center pt-2">
-                        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-bold text-white shadow-[0_0_10px_rgba(19,91,236,0.5)]">1</div>
-                        <div className="w-0.5 flex-1 bg-border-dark group-hover:bg-primary/50 transition-colors my-2"></div>
-                    </div>
-                    <div className="flex-1 bg-surface-dark rounded-xl border border-primary/50 shadow-lg p-1 flex flex-col md:flex-row gap-0 overflow-hidden relative ring-1 ring-primary/20">
-                        <div className="w-full md:w-[280px] aspect-video bg-black relative group/media">
-                            <div className="absolute inset-0 bg-cover bg-center opacity-80" style={{backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuAQvaBgyu0utfp6-7Lz6TOUhlrXEoylCV_4O9FOVg5MO5PL_XGiIRYdnbPCyPrpaMaIu80-Vo2L90FTiCOep9VlQsXSbihuNLC4BHHPFj-x2nuhAMMhI3MJk6SwvDk5-nkEZfGkd7pT2vn6po4d7eziR0cjZAZOqaPA5SQTuPlRKbQ-hSXMA5TpEWNiAK9RhwBrfsvtd_Jq6gExkbDZdZKrz_Oh3N4ciuBp01UyMiDN1iq1-SdivcMbrEoBIpuRoLYXfG5OoWmoOEvA")'}}></div>
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover/media:opacity-100 transition-opacity cursor-pointer">
-                                <span className="material-symbols-outlined text-white text-4xl">play_circle</span>
-                            </div>
-                            <div className="absolute bottom-2 right-2 flex gap-1">
-                                <span className="bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-md border border-white/10">00:04s</span>
-                                <span className="bg-primary/80 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-md flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[10px]">videocam</span> {t('assetLibrary.videos')}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="flex-1 p-4 flex flex-col justify-between gap-4">
-                            <div>
-                                <div className="flex justify-between items-start mb-2">
-                                    <h4 className="text-white font-bold text-sm">Ext. Neon Street - Night</h4>
-                                    <div className="flex gap-1">
-                                        <button className="text-text-secondary hover:text-white p-1" title="Regenerate"><span className="material-symbols-outlined text-[18px]">refresh</span></button>
-                                        <button className="text-text-secondary hover:text-white p-1" title="Edit Prompt"><span className="material-symbols-outlined text-[18px]">edit</span></button>
-                                    </div>
-                                </div>
-                                <div className="bg-background-dark/50 p-2.5 rounded border border-border-dark/50 mb-3">
-                                    <p className="text-text-secondary text-xs uppercase font-bold tracking-wider mb-1 flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[12px]">record_voice_over</span> {t('generation.dialogue')}
-                                    </p>
-                                    <p className="text-gray-300 text-sm italic">"The rain never stops here. It just changes color."</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center justify-between mt-auto pt-2 border-t border-border-dark/30">
-                                <div className="flex gap-2">
-                                    <span className="text-[10px] bg-border-dark text-text-secondary px-2 py-0.5 rounded-full">Kling v1.2</span>
-                                    <span className="text-[10px] bg-border-dark text-text-secondary px-2 py-0.5 rounded-full">Fish-Speech</span>
-                                </div>
-                                <div className="flex gap-1">
-                                    <button className="text-text-secondary hover:text-green-400"><span className="material-symbols-outlined text-[18px]">thumb_up</span></button>
-                                    <button className="text-text-secondary hover:text-red-400"><span className="material-symbols-outlined text-[18px]">thumb_down</span></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {shots.length === 0 ? (
+                  /* Empty State */
+                  <div className="flex flex-col items-center justify-center h-full text-center py-16">
+                    <span className="material-symbols-outlined text-text-secondary/30 text-7xl mb-4">movie_creation</span>
+                    <h3 className="text-white text-lg font-bold mb-2">{t('generation.noShotsTitle')}</h3>
+                    <p className="text-text-secondary text-sm max-w-md">
+                      {t('generation.noShotsDescription')}
+                    </p>
+                  </div>
+                ) : (
+                  /* Render shots dynamically */
+                  shots.map((shot, index) => {
+                    const isFirst = index === 0
+                    const hasMedia = shot.image_path || shot.video_path
+                    const isGenerated = shot.status === 'completed'
 
-                {/* Shot 2 */}
-                <div className="flex gap-4 group">
-                    <div className="flex flex-col items-center pt-2">
-                        <div className="w-6 h-6 rounded-full bg-surface-dark border border-border-dark flex items-center justify-center text-[10px] font-bold text-text-secondary">2</div>
-                        <div className="w-0.5 flex-1 bg-border-dark my-2"></div>
-                    </div>
-                    <div className="flex-1 bg-surface-dark rounded-xl border border-border-dark p-1 flex flex-col md:flex-row gap-0 opacity-80 hover:opacity-100 transition-opacity">
-                        <div className="w-full md:w-[280px] aspect-video bg-[#15171e] relative flex flex-col items-center justify-center border-r border-border-dark/50">
-                            <span className="material-symbols-outlined text-text-secondary/30 text-5xl mb-2">movie_filter</span>
-                            <span className="text-text-secondary/50 text-xs font-medium">{t('generation.waitingToGenerate')}</span>
+                    return (
+                      <div key={shot.id} className="flex gap-4 group">
+                        {/* Timeline indicator */}
+                        <div className="flex flex-col items-center pt-2">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                            isFirst
+                              ? 'bg-primary text-white shadow-[0_0_10px_rgba(19,91,236,0.5)]'
+                              : 'bg-surface-dark border border-border-dark text-text-secondary'
+                          }`}>
+                            {shot.shot_number}
+                          </div>
+                          {index < shots.length - 1 && (
+                            <div className={`w-0.5 flex-1 my-2 ${isFirst ? 'bg-border-dark group-hover:bg-primary/50' : 'bg-border-dark'} transition-colors`}></div>
+                          )}
                         </div>
-                        <div className="flex-1 p-4 flex flex-col gap-3">
-                            <div>
-                                <h4 className="text-white font-bold text-sm mb-2">Cu. Boots splashing</h4>
-                                <div className="bg-background-dark/50 p-2.5 rounded border border-border-dark/50">
-                                    <p className="text-text-secondary text-xs uppercase font-bold tracking-wider mb-1 flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[12px]">description</span> {t('generation.prompt')}
-                                    </p>
-                                    <p className="text-gray-400 text-sm">Close up shot, low angle, heavy leather boots stepping into a neon-reflecting puddle, splashes of water, high fidelity, 8k.</p>
+
+                        {/* Shot card */}
+                        <div className={`flex-1 bg-surface-dark rounded-xl p-1 flex flex-col md:flex-row gap-0 overflow-hidden transition-opacity ${
+                          isFirst
+                            ? 'border border-primary/50 shadow-lg ring-1 ring-primary/20'
+                            : 'border border-border-dark opacity-80 hover:opacity-100'
+                        }`}>
+                          {/* Media preview */}
+                          <div className="w-full md:w-[280px] aspect-video bg-[#15171e] relative group/media">
+                            {hasMedia ? (
+                              <>
+                                <div
+                                  className="absolute inset-0 bg-cover bg-center opacity-80"
+                                  style={{backgroundImage: `url("${shot.video_path || shot.image_path}")`}}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover/media:opacity-100 transition-opacity cursor-pointer">
+                                  <span className="material-symbols-outlined text-white text-4xl">play_circle</span>
                                 </div>
+                                <div className="absolute bottom-2 right-2 flex gap-1">
+                                  {shot.duration && (
+                                    <span className="bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-md border border-white/10">
+                                      {formatDuration(shot.duration)}
+                                    </span>
+                                  )}
+                                  <span className="bg-primary/80 text-white text-[10px] px-1.5 py-0.5 rounded backdrop-blur-md flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[10px]">{shot.video_path ? 'videocam' : 'image'}</span>
+                                    {shot.video_path ? t('assetLibrary.videos') : t('assetLibrary.images')}
+                                  </span>
+                                </div>
+                              </>
+                            ) : (
+                              <div className="absolute inset-0 flex flex-col items-center justify-center border-r border-border-dark/50">
+                                <span className="material-symbols-outlined text-text-secondary/30 text-5xl mb-2">movie_filter</span>
+                                <span className="text-text-secondary/50 text-xs font-medium">{t('generation.waitingToGenerate')}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Shot details */}
+                          <div className="flex-1 p-4 flex flex-col justify-between gap-4">
+                            <div>
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="text-white font-bold text-sm">
+                                  {shot.scene_description || `Shot ${shot.shot_number}`}
+                                </h4>
+                                <div className="flex gap-1">
+                                  <button className="text-text-secondary hover:text-white p-1" title={t('generation.regenerate')}>
+                                    <span className="material-symbols-outlined text-[18px]">refresh</span>
+                                  </button>
+                                  <button className="text-text-secondary hover:text-white p-1" title={t('generation.editPrompt')}>
+                                    <span className="material-symbols-outlined text-[18px]">edit</span>
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Dialog or Prompt */}
+                              {shot.dialog?.text ? (
+                                <div className="bg-background-dark/50 p-2.5 rounded border border-border-dark/50 mb-3">
+                                  <p className="text-text-secondary text-xs uppercase font-bold tracking-wider mb-1 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[12px]">record_voice_over</span> {t('generation.dialogue')}
+                                  </p>
+                                  <p className="text-gray-300 text-sm italic">"{shot.dialog.text}"</p>
+                                </div>
+                              ) : shot.image_prompt ? (
+                                <div className="bg-background-dark/50 p-2.5 rounded border border-border-dark/50 mb-3">
+                                  <p className="text-text-secondary text-xs uppercase font-bold tracking-wider mb-1 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[12px]">description</span> {t('generation.prompt')}
+                                  </p>
+                                  <p className="text-gray-400 text-sm">{shot.image_prompt}</p>
+                                </div>
+                              ) : null}
                             </div>
-                            <div className="mt-auto flex justify-end">
-                                <button className="flex items-center gap-2 px-3 py-1.5 rounded bg-primary/10 text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">
+
+                            <div className="flex items-center justify-between mt-auto pt-2 border-t border-border-dark/30">
+                              {isGenerated ? (
+                                <>
+                                  <div className="flex gap-2">
+                                    <span className="text-[10px] bg-border-dark text-text-secondary px-2 py-0.5 rounded-full">
+                                      {shot.video_path ? 'Kling' : 'ComfyUI'}
+                                    </span>
+                                    {shot.audio_path && (
+                                      <span className="text-[10px] bg-border-dark text-text-secondary px-2 py-0.5 rounded-full">
+                                        Edge-TTS
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <button className="text-text-secondary hover:text-green-400">
+                                      <span className="material-symbols-outlined text-[18px]">thumb_up</span>
+                                    </button>
+                                    <button className="text-text-secondary hover:text-red-400">
+                                      <span className="material-symbols-outlined text-[18px]">thumb_down</span>
+                                    </button>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="flex justify-end w-full">
+                                  <button className="flex items-center gap-2 px-3 py-1.5 rounded bg-primary/10 text-primary text-xs font-bold hover:bg-primary hover:text-white transition-colors">
                                     <span className="material-symbols-outlined text-[16px]">play_arrow</span> {t('generation.generateShot')}
-                                </button>
+                                  </button>
+                                </div>
+                              )}
                             </div>
+                          </div>
                         </div>
-                    </div>
-                </div>
+                      </div>
+                    )
+                  })
+                )}
             </div>
         </main>
 

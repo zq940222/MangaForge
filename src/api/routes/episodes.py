@@ -282,10 +282,20 @@ async def expand_script_to_shots(
     # 导入必要的组件
     from src.agents.script_agent import ScriptAgent
     from src.agents.storyboard_agent import StoryboardAgent
+    from src.services.factory import get_llm_service_with_auto_fallback
 
     try:
+        # 获取用户配置的LLM服务（带自动回退功能，当主服务失败时自动尝试下一个）
+        try:
+            llm_service = await get_llm_service_with_auto_fallback(db, user_id)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=str(e),
+            )
+
         # 1. 解析剧本
-        script_agent = ScriptAgent()
+        script_agent = ScriptAgent(llm_service=llm_service)
         script_result = await script_agent.run({
             "user_input": episode.script_input,
             "style": project.style,
@@ -302,7 +312,7 @@ async def expand_script_to_shots(
         episode.script_parsed = script_result.get("script", {})
 
         # 2. 生成分镜
-        storyboard_agent = StoryboardAgent()
+        storyboard_agent = StoryboardAgent(llm_service=llm_service)
         storyboard_result = await storyboard_agent.run({
             "script": episode.script_parsed,
             "style": project.style,

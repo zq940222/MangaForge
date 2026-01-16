@@ -64,7 +64,14 @@ For a {aspect_ratio} vertical/horizontal frame.
 
 Output only the prompt, no explanations."""
 
-    def __init__(self):
+    def __init__(self, llm_service=None):
+        """
+        初始化分镜Agent
+
+        Args:
+            llm_service: 可选的LLM服务实例。如果不提供，将使用默认的服务工厂获取。
+        """
+        self._llm_service = llm_service
         self.service_factory = get_service_factory()
         super().__init__()
 
@@ -90,7 +97,11 @@ Output only the prompt, no explanations."""
 
     async def _process_shots(self, state: StoryboardState) -> dict[str, Any]:
         """处理所有镜头"""
-        llm_service = self.service_factory.get_llm_service()
+        # 优先使用传入的LLM服务，否则使用默认的
+        if self._llm_service:
+            llm_service = self._llm_service
+        else:
+            llm_service = self.service_factory.get_llm_service()
         processed_shots = []
 
         scenes = state.script.get("scenes", [])

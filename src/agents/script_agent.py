@@ -135,7 +135,14 @@ class ScriptAgent(BaseAgent):
 请生成完整的 JSON 格式分镜剧本，严格按照系统提示中的格式要求。
 """
 
-    def __init__(self):
+    def __init__(self, llm_service=None):
+        """
+        初始化剧本Agent
+
+        Args:
+            llm_service: 可选的LLM服务实例。如果不提供，将使用默认的服务工厂获取。
+        """
+        self._llm_service = llm_service
         self.service_factory = get_service_factory()
         super().__init__()
 
@@ -167,18 +174,29 @@ class ScriptAgent(BaseAgent):
     ) -> Optional[str]:
         """调用 LLM 服务"""
         try:
-            llm_service = self.service_factory.get_llm_service()
+            # 优先使用传入的LLM服务，否则使用默认的
+            if self._llm_service:
+                llm_service = self._llm_service
+            else:
+                llm_service = self.service_factory.get_llm_service()
+
             if json_mode:
                 result = await llm_service.generate_json(messages)
                 if result.success:
                     return result.data
+                else:
+                    print(f"LLM JSON generation failed: {result.error}")
             else:
                 result = await llm_service.generate(messages)
                 if result.success:
                     return result.data.content
+                else:
+                    print(f"LLM generation failed: {result.error}")
             return None
         except Exception as e:
             print(f"LLM call failed: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
     async def _analyze_story(self, state: ScriptState) -> dict[str, Any]:

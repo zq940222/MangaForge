@@ -67,7 +67,7 @@ class Settings(BaseSettings):
     # ===========================================
     # LLM Configuration
     # ===========================================
-    llm_provider: Literal["openai", "anthropic", "gemini", "local"] = "anthropic"
+    llm_provider: Literal["openai", "anthropic", "gemini", "local"] = "gemini"
     openai_api_key: str = ""
     anthropic_api_key: str = ""
     gemini_api_key: str = ""
