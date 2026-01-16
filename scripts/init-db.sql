@@ -48,10 +48,17 @@ CREATE TABLE IF NOT EXISTS characters (
     lora_path VARCHAR(500),  -- LoRA模型路径
     ip_adapter_embedding VARCHAR(500),  -- IP-Adapter嵌入路径
     trigger_word VARCHAR(50),  -- LoRA触发词
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- 创建时间
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- 创建时间
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- 更新时间
 );
 
 COMMENT ON TABLE characters IS '漫剧角色定义，包含视觉和语音特征';
+
+DROP TRIGGER IF EXISTS update_characters_updated_at ON characters;
+CREATE TRIGGER update_characters_updated_at
+    BEFORE UPDATE ON characters
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================
 -- 集/章节表
@@ -110,10 +117,17 @@ CREATE TABLE IF NOT EXISTS shots (
     status VARCHAR(20) DEFAULT 'pending',  -- 状态: pending(待处理) / 其他状态
     error_message TEXT,  -- 错误信息
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- 创建时间
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- 更新时间
 );
 
 COMMENT ON TABLE shots IS '单个镜头，是漫剧的最小生成单位';
+
+DROP TRIGGER IF EXISTS update_shots_updated_at ON shots;
+CREATE TRIGGER update_shots_updated_at
+    BEFORE UPDATE ON shots
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================
 -- 用户API配置表
