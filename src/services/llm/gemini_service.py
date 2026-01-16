@@ -1,5 +1,7 @@
 """
 Google Gemini Service Implementation
+
+使用新的 google-genai SDK (替代已弃用的 google-generativeai)
 """
 from typing import AsyncIterator
 
@@ -14,64 +16,38 @@ class GeminiService(BaseLLMService):
 
     # Gemini 稳定版模型列表（按推荐顺序）
     STABLE_MODELS = [
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
         "gemini-1.5-flash",
         "gemini-1.5-pro",
-        "gemini-1.5-flash-8b",
-        "gemini-1.0-pro",
     ]
 
     def __init__(self, config: ServiceConfig):
         super().__init__(config)
-        # 使用 google-generativeai 库
-        import google.generativeai as genai
+        from google import genai
 
-        genai.configure(api_key=config.api_key)
-        self.genai = genai
-        # 默认使用稳定版 gemini-1.5-flash
-        self.model_name = config.model or "gemini-1.5-flash"
+        # 使用新的 google-genai SDK
+        self.client = genai.Client(api_key=config.api_key)
+        # 默认使用稳定版 gemini-2.0-flash
+        self.model_name = config.model or "gemini-2.0-flash"
         self._last_error: str | None = None
-        try:
-            self.model = genai.GenerativeModel(self.model_name)
-        except Exception as e:
-            self._last_error = str(e)
-            self.model = None
 
     async def health_check(self) -> bool:
         """检查服务是否可用"""
-        import asyncio
-
-        # 如果模型初始化失败
-        if self.model is None:
-            raise Exception(f"Model initialization failed: {self._last_error}")
-
         try:
-            # 使用 generate_content_async 直接测试 API 连接和模型可用性
-            # 这是最可靠的方式，因为它同时验证 API key 和模型访问权限
-            response = await self.model.generate_content_async(
-                "Reply with just the word 'ok'",
+            # 使用异步客户端测试连接
+            response = await self.client.aio.models.generate_content(
+                model=self.model_name,
+                contents="Reply with just the word 'ok'",
             )
 
             # 检查响应是否有效
             if response is None:
                 raise Exception("Empty response from API")
 
-            # 检查是否有候选响应
-            if not response.candidates:
-                # 可能被安全过滤器阻止
-                if hasattr(response, 'prompt_feedback') and response.prompt_feedback:
-                    feedback = response.prompt_feedback
-                    if hasattr(feedback, 'block_reason') and feedback.block_reason:
-                        raise Exception(f"Request blocked: {feedback.block_reason}")
-                raise Exception("No response candidates returned")
-
             # 检查文本内容
-            try:
-                text = response.text
-                if text is not None:
-                    return True
-            except ValueError as e:
-                # response.text 可能抛出 ValueError 如果被阻止
-                raise Exception(f"Response blocked or invalid: {e}")
+            if response.text:
+                return True
 
             raise Exception("Response has no text content")
 
@@ -79,43 +55,40 @@ class GeminiService(BaseLLMService):
             error_str = str(e).lower()
             # 分析错误类型并提供更友好的错误信息
             if "api_key" in error_str or "api key" in error_str or "invalid" in error_str:
-                raise Exception(f"Invalid API key: Please check your Gemini API key")
+                raise Exception("Invalid API key: Please check your Gemini API key")
             elif "permission" in error_str or "denied" in error_str or "403" in error_str:
-                raise Exception(f"Permission denied: Your API key may not have access to this model")
+                raise Exception("Permission denied: Your API key may not have access to this model")
             elif "quota" in error_str or "rate" in error_str or "429" in error_str:
-                raise Exception(f"Rate limit or quota exceeded: Please try again later")
+                raise Exception("Rate limit or quota exceeded: Please try again later")
             elif "not found" in error_str or "404" in error_str:
                 raise Exception(f"Model '{self.model_name}' not found: Please select a different model")
             elif "timeout" in error_str or "timed out" in error_str:
-                raise Exception(f"Connection timeout: Please check your network")
+                raise Exception("Connection timeout: Please check your network")
             else:
                 # 重新抛出原始异常
                 raise
 
     async def get_models(self) -> list[str]:
         """获取可用模型列表"""
-        import google.generativeai as genai
-
         try:
-            # 动态获取用户 API key 可用的模型
-            models = list(genai.list_models())
+            # 使用异步客户端获取模型列表
             gemini_models = []
-
-            for model in models:
-                # 只返回支持 generateContent 的 Gemini 模型
-                if "gemini" in model.name.lower() and "generateContent" in model.supported_generation_methods:
+            async for model in await self.client.aio.models.list():
+                model_name = model.name
+                # 只返回 Gemini 模型
+                if "gemini" in model_name.lower():
                     # 移除 "models/" 前缀
-                    model_name = model.name.replace("models/", "")
-                    gemini_models.append(model_name)
+                    clean_name = model_name.replace("models/", "")
+                    gemini_models.append(clean_name)
 
             # 按照推荐顺序排序
             def model_priority(name: str) -> int:
                 priorities = {
-                    "gemini-1.5-flash": 0,
-                    "gemini-1.5-pro": 1,
-                    "gemini-2.0-flash-exp": 2,
-                    "gemini-1.5-flash-8b": 3,
-                    "gemini-1.0-pro": 4,
+                    "gemini-2.5-flash": 0,
+                    "gemini-2.0-flash": 1,
+                    "gemini-1.5-flash": 2,
+                    "gemini-1.5-pro": 3,
+                    "gemini-2.5-pro": 4,
                 }
                 for key, priority in priorities.items():
                     if key in name:
@@ -139,63 +112,62 @@ class GeminiService(BaseLLMService):
     ) -> ServiceResult:
         """生成文本"""
         try:
-            from google.generativeai.types import GenerationConfig
+            from google.genai import types
 
-            # 构建对话历史
+            # 提取 system instruction 和构建内容
             system_instruction = None
-            chat_history = []
+            contents = []
 
             for msg in messages:
                 if msg.role.value == "system":
                     system_instruction = msg.content
                 elif msg.role.value == "user":
-                    chat_history.append({"role": "user", "parts": [msg.content]})
+                    contents.append(types.Content(
+                        role="user",
+                        parts=[types.Part(text=msg.content)]
+                    ))
                 elif msg.role.value == "assistant":
-                    chat_history.append({"role": "model", "parts": [msg.content]})
-
-            # 创建带有 system instruction 的模型
-            model = self.genai.GenerativeModel(
-                self.model_name,
-                system_instruction=system_instruction,
-            )
+                    contents.append(types.Content(
+                        role="model",
+                        parts=[types.Part(text=msg.content)]
+                    ))
 
             # 配置生成参数
-            generation_config = GenerationConfig(
+            config = types.GenerateContentConfig(
+                system_instruction=system_instruction,
                 temperature=temperature,
                 max_output_tokens=max_tokens,
             )
 
             if json_mode:
-                generation_config.response_mime_type = "application/json"
+                config.response_mime_type = "application/json"
 
-            # 如果只有一条用户消息，直接生成
-            if len(chat_history) == 1 and chat_history[0]["role"] == "user":
-                response = await model.generate_content_async(
-                    chat_history[0]["parts"][0],
-                    generation_config=generation_config,
-                )
-            else:
-                # 使用聊天模式
-                chat = model.start_chat(history=chat_history[:-1] if chat_history else [])
-                last_message = chat_history[-1]["parts"][0] if chat_history else ""
-                response = await chat.send_message_async(
-                    last_message,
-                    generation_config=generation_config,
-                )
+            # 调用 API
+            response = await self.client.aio.models.generate_content(
+                model=self.model_name,
+                contents=contents if len(contents) > 1 else contents[0].parts[0].text if contents else "",
+                config=config,
+            )
 
             # 构建响应
             usage = {}
             if hasattr(response, 'usage_metadata') and response.usage_metadata:
                 usage = {
-                    "input_tokens": response.usage_metadata.prompt_token_count,
-                    "output_tokens": response.usage_metadata.candidates_token_count,
+                    "input_tokens": getattr(response.usage_metadata, 'prompt_token_count', 0),
+                    "output_tokens": getattr(response.usage_metadata, 'candidates_token_count', 0),
                 }
+
+            finish_reason = None
+            if response.candidates:
+                candidate = response.candidates[0]
+                if hasattr(candidate, 'finish_reason'):
+                    finish_reason = str(candidate.finish_reason)
 
             llm_response = LLMResponse(
                 content=response.text,
                 model=self.model_name,
                 usage=usage,
-                finish_reason=response.candidates[0].finish_reason.name if response.candidates else None,
+                finish_reason=finish_reason,
                 raw_response=response,
             )
 
@@ -218,49 +190,38 @@ class GeminiService(BaseLLMService):
         **kwargs,
     ) -> AsyncIterator[str]:
         """流式生成文本"""
-        from google.generativeai.types import GenerationConfig
+        from google.genai import types
 
-        # 构建对话历史
+        # 提取 system instruction 和构建内容
         system_instruction = None
-        chat_history = []
+        contents = []
 
         for msg in messages:
             if msg.role.value == "system":
                 system_instruction = msg.content
             elif msg.role.value == "user":
-                chat_history.append({"role": "user", "parts": [msg.content]})
+                contents.append(types.Content(
+                    role="user",
+                    parts=[types.Part(text=msg.content)]
+                ))
             elif msg.role.value == "assistant":
-                chat_history.append({"role": "model", "parts": [msg.content]})
-
-        # 创建带有 system instruction 的模型
-        model = self.genai.GenerativeModel(
-            self.model_name,
-            system_instruction=system_instruction,
-        )
+                contents.append(types.Content(
+                    role="model",
+                    parts=[types.Part(text=msg.content)]
+                ))
 
         # 配置生成参数
-        generation_config = GenerationConfig(
+        config = types.GenerateContentConfig(
+            system_instruction=system_instruction,
             temperature=temperature,
             max_output_tokens=max_tokens,
         )
 
-        # 如果只有一条用户消息，直接生成
-        if len(chat_history) == 1 and chat_history[0]["role"] == "user":
-            response = await model.generate_content_async(
-                chat_history[0]["parts"][0],
-                generation_config=generation_config,
-                stream=True,
-            )
-        else:
-            # 使用聊天模式
-            chat = model.start_chat(history=chat_history[:-1] if chat_history else [])
-            last_message = chat_history[-1]["parts"][0] if chat_history else ""
-            response = await chat.send_message_async(
-                last_message,
-                generation_config=generation_config,
-                stream=True,
-            )
-
-        async for chunk in response:
+        # 调用流式 API
+        async for chunk in await self.client.aio.models.generate_content_stream(
+            model=self.model_name,
+            contents=contents if len(contents) > 1 else contents[0].parts[0].text if contents else "",
+            config=config,
+        ):
             if chunk.text:
                 yield chunk.text
