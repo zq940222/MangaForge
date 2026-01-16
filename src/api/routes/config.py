@@ -253,16 +253,27 @@ async def test_connection(
         service = services.create_service(service_type, data.provider, service_config)
 
         # 测试连接
-        is_healthy = await service.health_check()
+        try:
+            is_healthy = await service.health_check()
+        except Exception as health_error:
+            # health_check 抛出异常时，返回详细错误信息
+            return TestConnectionResponse(
+                success=False,
+                message=f"Connection failed: {str(health_error)}",
+            )
 
         if not is_healthy:
             return TestConnectionResponse(
                 success=False,
-                message="Connection failed",
+                message="Connection failed: Health check returned false",
             )
 
         # 获取可用模型
-        models = await service.get_models()
+        try:
+            models = await service.get_models()
+        except Exception as model_error:
+            # 即使获取模型列表失败，连接本身是成功的
+            models = []
 
         return TestConnectionResponse(
             success=True,

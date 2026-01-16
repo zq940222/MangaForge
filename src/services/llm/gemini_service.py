@@ -38,51 +38,59 @@ class GeminiService(BaseLLMService):
 
     async def health_check(self) -> bool:
         """检查服务是否可用"""
-        import google.generativeai as genai
+        import asyncio
 
         # 如果模型初始化失败
         if self.model is None:
             raise Exception(f"Model initialization failed: {self._last_error}")
 
         try:
-            # 先尝试列出可用模型来验证 API key
+            # 使用 generate_content_async 直接测试 API 连接和模型可用性
+            # 这是最可靠的方式，因为它同时验证 API key 和模型访问权限
+            response = await self.model.generate_content_async(
+                "Reply with just the word 'ok'",
+            )
+
+            # 检查响应是否有效
+            if response is None:
+                raise Exception("Empty response from API")
+
+            # 检查是否有候选响应
+            if not response.candidates:
+                # 可能被安全过滤器阻止
+                if hasattr(response, 'prompt_feedback') and response.prompt_feedback:
+                    feedback = response.prompt_feedback
+                    if hasattr(feedback, 'block_reason') and feedback.block_reason:
+                        raise Exception(f"Request blocked: {feedback.block_reason}")
+                raise Exception("No response candidates returned")
+
+            # 检查文本内容
             try:
-                models = list(genai.list_models())
-                if not models:
-                    raise Exception("No models available for this API key")
-            except Exception as e:
-                error_str = str(e).lower()
-                if "api key" in error_str or "invalid" in error_str or "authenticate" in error_str:
-                    raise Exception(f"Invalid API key: {e}")
-                elif "permission" in error_str or "denied" in error_str:
-                    raise Exception(f"API key permission denied: {e}")
-                elif "quota" in error_str or "rate" in error_str:
-                    raise Exception(f"Rate limit or quota exceeded: {e}")
-                else:
-                    raise Exception(f"Failed to list models: {e}")
+                text = response.text
+                if text is not None:
+                    return True
+            except ValueError as e:
+                # response.text 可能抛出 ValueError 如果被阻止
+                raise Exception(f"Response blocked or invalid: {e}")
 
-            # 检查请求的模型是否可用
-            available_model_names = [m.name for m in models]
-            model_id = f"models/{self.model_name}"
-
-            if model_id not in available_model_names:
-                # 尝试找到可用的模型
-                available_gemini = [m for m in available_model_names if "gemini" in m.lower()]
-                if available_gemini:
-                    raise Exception(
-                        f"Model '{self.model_name}' not available. "
-                        f"Available Gemini models: {', '.join([m.replace('models/', '') for m in available_gemini[:5]])}"
-                    )
-                else:
-                    raise Exception(f"Model '{self.model_name}' not available for this API key")
-
-            # 发送一个简单请求测试连接
-            response = await self.model.generate_content_async("hi")
-            return response.text is not None
+            raise Exception("Response has no text content")
 
         except Exception as e:
-            # 重新抛出异常以便上层获取详细错误信息
-            raise
+            error_str = str(e).lower()
+            # 分析错误类型并提供更友好的错误信息
+            if "api_key" in error_str or "api key" in error_str or "invalid" in error_str:
+                raise Exception(f"Invalid API key: Please check your Gemini API key")
+            elif "permission" in error_str or "denied" in error_str or "403" in error_str:
+                raise Exception(f"Permission denied: Your API key may not have access to this model")
+            elif "quota" in error_str or "rate" in error_str or "429" in error_str:
+                raise Exception(f"Rate limit or quota exceeded: Please try again later")
+            elif "not found" in error_str or "404" in error_str:
+                raise Exception(f"Model '{self.model_name}' not found: Please select a different model")
+            elif "timeout" in error_str or "timed out" in error_str:
+                raise Exception(f"Connection timeout: Please check your network")
+            else:
+                # 重新抛出原始异常
+                raise
 
     async def get_models(self) -> list[str]:
         """获取可用模型列表"""
