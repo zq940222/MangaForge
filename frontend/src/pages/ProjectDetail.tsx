@@ -50,7 +50,7 @@ export function ProjectDetail() {
   const createEpisodeMutation = useMutation({
     mutationFn: (data: EpisodeCreate) => episodesApi.create(projectId!, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['episodes', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['episodes', projectId], refetchType: 'active' })
       setIsEpisodeModalOpen(false)
       setNewEpisode({ episode_number: (episodes?.length ?? 0) + 1, title: '', script_input: '' })
     },
@@ -59,7 +59,7 @@ export function ProjectDetail() {
   const createCharacterMutation = useMutation({
     mutationFn: (data: CharacterCreate) => charactersApi.create(projectId!, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['characters', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['characters', projectId], refetchType: 'active' })
       setIsCharacterModalOpen(false)
       setNewCharacter({ name: '', description: '', gender: '', age_range: '', personality: '' })
     },
@@ -68,14 +68,14 @@ export function ProjectDetail() {
   const deleteEpisodeMutation = useMutation({
     mutationFn: (episodeId: string) => episodesApi.delete(projectId!, episodeId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['episodes', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['episodes', projectId], refetchType: 'active' })
     },
   })
 
   const deleteCharacterMutation = useMutation({
     mutationFn: (characterId: string) => charactersApi.delete(projectId!, characterId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['characters', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['characters', projectId], refetchType: 'active' })
     },
   })
 
