@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useProjects, useCreateProject, useDeleteProject } from '../hooks/useProjects'
+import { useProjects, useCreateProject } from '../hooks/useProjects'
 import type { Project } from '../hooks/useProjects'
 
 function getStatusDisplay(status: string) {

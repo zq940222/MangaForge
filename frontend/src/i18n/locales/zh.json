@@ -1,0 +1,166 @@
+{
+  "common": {
+    "search": "搜索...",
+    "create": "新建",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "confirm": "确认",
+    "loading": "加载中...",
+    "noData": "暂无数据",
+    "success": "操作成功",
+    "error": "操作失败",
+    "back": "返回"
+  },
+  "nav": {
+    "mainMenu": "主菜单",
+    "system": "系统",
+    "dashboard": "工作台",
+    "projects": "我的项目",
+    "characters": "角色管理",
+    "assetLibrary": "素材库",
+    "agentSettings": "Agent 设置",
+    "analytics": "数据分析",
+    "billing": "账单",
+    "distribution": "分发中心",
+    "proPlan": "专业版"
+  },
+  "header": {
+    "search": "搜索...",
+    "createNew": "新建项目",
+    "notifications": "通知"
+  },
+  "dashboard": {
+    "title": "工作台",
+    "welcome": "欢迎回来",
+    "recentProjects": "最近项目",
+    "quickActions": "快捷操作",
+    "stats": {
+      "totalProjects": "项目总数",
+      "completedVideos": "已完成视频",
+      "processingTasks": "处理中任务",
+      "totalDuration": "总时长"
+    }
+  },
+  "projects": {
+    "title": "项目列表",
+    "createProject": "创建项目",
+    "newProject": "新建项目",
+    "projectName": "项目名称",
+    "description": "项目描述",
+    "style": "风格",
+    "platform": "目标平台",
+    "aspectRatio": "画面比例",
+    "status": {
+      "draft": "草稿",
+      "processing": "处理中",
+      "completed": "已完成",
+      "failed": "失败"
+    },
+    "styles": {
+      "anime": "动漫风格",
+      "manga": "漫画风格",
+      "realistic": "写实风格",
+      "3d": "3D风格"
+    },
+    "platforms": {
+      "douyin": "抖音",
+      "kuaishou": "快手",
+      "bilibili": "B站",
+      "youtube": "YouTube"
+    },
+    "actions": {
+      "view": "查看",
+      "generate": "生成视频",
+      "delete": "删除项目"
+    }
+  },
+  "characters": {
+    "title": "角色管理",
+    "createCharacter": "创建角色",
+    "name": "角色名称",
+    "description": "外貌描述",
+    "gender": "性别",
+    "ageRange": "年龄段",
+    "personality": "性格特征",
+    "genders": {
+      "male": "男",
+      "female": "女",
+      "other": "其他"
+    },
+    "referenceImages": "参考图片",
+    "voiceSample": "声音样本",
+    "uploadImage": "上传图片",
+    "uploadVoice": "上传音频"
+  },
+  "episodes": {
+    "title": "剧集",
+    "createEpisode": "创建剧集",
+    "episodeNumber": "集数",
+    "scriptInput": "剧本内容",
+    "expandToShots": "展开为分镜",
+    "status": {
+      "pending": "待处理",
+      "script_done": "剧本完成",
+      "rendering": "渲染中",
+      "lipsync": "口型同步",
+      "editing": "剪辑中",
+      "completed": "已完成",
+      "failed": "失败"
+    }
+  },
+  "generation": {
+    "title": "视频生成",
+    "storyboard": "分镜",
+    "script": "剧本",
+    "shots": "镜头",
+    "generateAll": "一键生成",
+    "generateImage": "生成图片",
+    "generateVideo": "生成视频",
+    "generateVoice": "生成配音",
+    "progress": "进度",
+    "preview": "预览"
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "theme": "主题",
+    "apiConfig": "API 配置",
+    "llmProvider": "大语言模型",
+    "imageProvider": "图像生成",
+    "videoProvider": "视频生成",
+    "voiceProvider": "语音合成",
+    "lipsyncProvider": "口型同步",
+    "apiKey": "API Key",
+    "endpoint": "服务地址",
+    "model": "模型",
+    "priority": "优先级",
+    "languages": {
+      "zh": "中文",
+      "en": "English"
+    }
+  },
+  "distribution": {
+    "title": "分发中心",
+    "platforms": "发布平台",
+    "connectAccount": "连接账号",
+    "publishVideo": "发布视频",
+    "publishHistory": "发布历史",
+    "quickPublish": "快速发布",
+    "status": {
+      "connected": "已连接",
+      "disconnected": "未连接",
+      "expired": "已过期"
+    }
+  },
+  "assetLibrary": {
+    "title": "素材库",
+    "images": "图片",
+    "videos": "视频",
+    "audio": "音频",
+    "models": "模型",
+    "upload": "上传素材",
+    "filter": "筛选"
+  }
+}

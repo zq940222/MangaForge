@@ -1,0 +1,166 @@
+{
+  "common": {
+    "search": "Search...",
+    "create": "Create",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "noData": "No data",
+    "success": "Success",
+    "error": "Error",
+    "back": "Back"
+  },
+  "nav": {
+    "mainMenu": "Main Menu",
+    "system": "System",
+    "dashboard": "Dashboard",
+    "projects": "My Projects",
+    "characters": "Characters",
+    "assetLibrary": "Asset Library",
+    "agentSettings": "Agent Settings",
+    "analytics": "Analytics",
+    "billing": "Billing",
+    "distribution": "Distribution",
+    "proPlan": "Pro Plan"
+  },
+  "header": {
+    "search": "Search...",
+    "createNew": "Create New",
+    "notifications": "Notifications"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back",
+    "recentProjects": "Recent Projects",
+    "quickActions": "Quick Actions",
+    "stats": {
+      "totalProjects": "Total Projects",
+      "completedVideos": "Completed Videos",
+      "processingTasks": "Processing Tasks",
+      "totalDuration": "Total Duration"
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "createProject": "Create Project",
+    "newProject": "New Project",
+    "projectName": "Project Name",
+    "description": "Description",
+    "style": "Style",
+    "platform": "Target Platform",
+    "aspectRatio": "Aspect Ratio",
+    "status": {
+      "draft": "Draft",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "styles": {
+      "anime": "Anime",
+      "manga": "Manga",
+      "realistic": "Realistic",
+      "3d": "3D"
+    },
+    "platforms": {
+      "douyin": "Douyin",
+      "kuaishou": "Kuaishou",
+      "bilibili": "Bilibili",
+      "youtube": "YouTube"
+    },
+    "actions": {
+      "view": "View",
+      "generate": "Generate Video",
+      "delete": "Delete Project"
+    }
+  },
+  "characters": {
+    "title": "Characters",
+    "createCharacter": "Create Character",
+    "name": "Name",
+    "description": "Description",
+    "gender": "Gender",
+    "ageRange": "Age Range",
+    "personality": "Personality",
+    "genders": {
+      "male": "Male",
+      "female": "Female",
+      "other": "Other"
+    },
+    "referenceImages": "Reference Images",
+    "voiceSample": "Voice Sample",
+    "uploadImage": "Upload Image",
+    "uploadVoice": "Upload Audio"
+  },
+  "episodes": {
+    "title": "Episodes",
+    "createEpisode": "Create Episode",
+    "episodeNumber": "Episode Number",
+    "scriptInput": "Script Content",
+    "expandToShots": "Expand to Shots",
+    "status": {
+      "pending": "Pending",
+      "script_done": "Script Done",
+      "rendering": "Rendering",
+      "lipsync": "Lip Sync",
+      "editing": "Editing",
+      "completed": "Completed",
+      "failed": "Failed"
+    }
+  },
+  "generation": {
+    "title": "Video Generation",
+    "storyboard": "Storyboard",
+    "script": "Script",
+    "shots": "Shots",
+    "generateAll": "Generate All",
+    "generateImage": "Generate Image",
+    "generateVideo": "Generate Video",
+    "generateVoice": "Generate Voice",
+    "progress": "Progress",
+    "preview": "Preview"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "theme": "Theme",
+    "apiConfig": "API Configuration",
+    "llmProvider": "LLM Provider",
+    "imageProvider": "Image Generation",
+    "videoProvider": "Video Generation",
+    "voiceProvider": "Voice Synthesis",
+    "lipsyncProvider": "Lip Sync",
+    "apiKey": "API Key",
+    "endpoint": "Endpoint",
+    "model": "Model",
+    "priority": "Priority",
+    "languages": {
+      "zh": "中文",
+      "en": "English"
+    }
+  },
+  "distribution": {
+    "title": "Distribution",
+    "platforms": "Platforms",
+    "connectAccount": "Connect Account",
+    "publishVideo": "Publish Video",
+    "publishHistory": "Publish History",
+    "quickPublish": "Quick Publish",
+    "status": {
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "expired": "Expired"
+    }
+  },
+  "assetLibrary": {
+    "title": "Asset Library",
+    "images": "Images",
+    "videos": "Videos",
+    "audio": "Audio",
+    "models": "Models",
+    "upload": "Upload Asset",
+    "filter": "Filter"
+  }
+}
