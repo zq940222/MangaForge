@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     # API
     # ===========================================
     api_prefix: str = "/api/v1"
-    cors_origins: str = "http://localhost:3000,http://localhost:8000"
+    cors_origins: str = "http://localhost:3000,http://localhost:5173,http://localhost:8000"
 
     # ===========================================
     # Database

@@ -5,7 +5,7 @@ from collections.abc import AsyncGenerator
 from typing import Optional
 from uuid import uuid4
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,10 +13,14 @@ from src.db.database import get_async_session
 from src.db.redis import get_redis, Redis
 from src.storage import get_storage, MinioStorage
 from src.services.factory import get_service_factory, ServiceFactory
+from src.config.settings import get_settings
 
 
 # HTTP Bearer token 认证
 security = HTTPBearer(auto_error=False)
+
+# 默认开发用户 ID
+DEFAULT_DEV_USER_ID = "00000000-0000-0000-0000-000000000001"
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -43,13 +47,19 @@ def get_services() -> ServiceFactory:
 
 async def get_current_user_id(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    x_user_id: Optional[str] = Header(None, alias="X-User-ID"),
 ) -> str:
     """
     获取当前用户 ID
 
-    TODO: 实现真正的 JWT 验证
-    目前返回模拟用户 ID
+    优先级：
+    1. JWT token (未实现)
+    2. X-User-ID header (开发模式)
+    3. 默认用户 ID
     """
+    settings = get_settings()
+
+    # 1. 如果有 Bearer token，使用 JWT 验证
     if credentials:
         # TODO: 验证 JWT token
         # token = credentials.credentials
@@ -57,8 +67,12 @@ async def get_current_user_id(
         # return payload.get("user_id")
         pass
 
-    # 开发模式：返回默认用户 ID
-    return "00000000-0000-0000-0000-000000000001"
+    # 2. 开发模式：从 X-User-ID header 读取
+    if settings.env == "development" and x_user_id:
+        return x_user_id
+
+    # 3. 返回默认用户 ID
+    return DEFAULT_DEV_USER_ID
 
 
 async def get_current_user_id_required(
