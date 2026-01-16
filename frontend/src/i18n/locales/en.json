@@ -11,7 +11,13 @@
     "noData": "No data",
     "success": "Success",
     "error": "Error",
-    "back": "Back"
+    "back": "Back",
+    "viewAll": "View All",
+    "getStarted": "Get Started",
+    "online": "Online",
+    "offline": "Offline",
+    "idle": "Idle",
+    "episodes": "episodes"
   },
   "nav": {
     "mainMenu": "Main Menu",
@@ -34,13 +40,46 @@
   "dashboard": {
     "title": "Dashboard",
     "welcome": "Welcome back",
+    "welcomeDesc": "Your AI agents are ready. Start creating amazing manga videos.",
     "recentProjects": "Recent Projects",
     "quickActions": "Quick Actions",
+    "systemStatus": "System Status",
+    "quickStart": "Quick Start",
+    "quickStartDesc": "Create a new project and let AI agents transform your script into a manga video.",
+    "noProjects": "No projects yet",
+    "createFirstProject": "Create Your First Project",
+    "projectsInWorkspace": "Projects in your workspace",
+    "currentlyProcessing": "Currently processing",
+    "readyToPublish": "Ready to publish",
     "stats": {
       "totalProjects": "Total Projects",
+      "activeGenerations": "Active Generations",
+      "completed": "Completed",
       "completedVideos": "Completed Videos",
       "processingTasks": "Processing Tasks",
       "totalDuration": "Total Duration"
+    },
+    "time": {
+      "justNow": "Just now",
+      "minutesAgo": "Edited {{count}}m ago",
+      "hoursAgo": "Edited {{count}}h ago",
+      "yesterday": "Edited yesterday",
+      "daysAgo": "Edited {{count}} days ago"
+    },
+    "status": {
+      "rendering": "Rendering...",
+      "generating": "GENERATING",
+      "done": "DONE",
+      "draft": "DRAFT",
+      "queued": "QUEUED"
+    },
+    "agents": {
+      "scriptWriter": "ScriptWriter",
+      "charGen": "CharGen",
+      "videoRenderer": "VideoRenderer",
+      "llmAgent": "LLM Agent",
+      "imageGeneration": "Image Generation",
+      "videoGeneration": "Video Generation"
     }
   },
   "projects": {
@@ -48,15 +87,23 @@
     "createProject": "Create Project",
     "newProject": "New Project",
     "projectName": "Project Name",
+    "projectNamePlaceholder": "Enter project name",
     "description": "Description",
+    "descriptionPlaceholder": "Describe your project...",
     "style": "Style",
     "platform": "Target Platform",
     "aspectRatio": "Aspect Ratio",
+    "vertical": "Vertical",
+    "horizontal": "Horizontal",
+    "noProjects": "No projects",
+    "noProjectsDesc": "Start creating your first AI manga project",
     "status": {
       "draft": "Draft",
       "processing": "Processing",
       "completed": "Completed",
-      "failed": "Failed"
+      "failed": "Failed",
+      "generating": "Generating",
+      "queued": "Queued"
     },
     "styles": {
       "anime": "Anime",
@@ -79,15 +126,29 @@
   "characters": {
     "title": "Characters",
     "createCharacter": "Create Character",
+    "newCharacter": "New Character",
     "name": "Name",
+    "namePlaceholder": "Enter character name",
     "description": "Description",
+    "descriptionPlaceholder": "Describe the character's appearance...",
     "gender": "Gender",
     "ageRange": "Age Range",
     "personality": "Personality",
+    "personalityPlaceholder": "Describe the character's personality...",
+    "selectProject": "Select Project",
+    "noCharacters": "No characters",
+    "noCharactersDesc": "Create characters for your project",
     "genders": {
       "male": "Male",
       "female": "Female",
       "other": "Other"
+    },
+    "ageRanges": {
+      "child": "Child",
+      "teen": "Teen",
+      "young_adult": "Young Adult",
+      "adult": "Adult",
+      "elderly": "Elderly"
     },
     "referenceImages": "Reference Images",
     "voiceSample": "Voice Sample",
@@ -124,6 +185,8 @@
   },
   "settings": {
     "title": "Settings",
+    "pageTitle": "Agent Neural Configuration",
+    "pageDescription": "Configure API keys for the AI services that power your MangaForge agents. Set up LLMs, image synthesis, video generation, and voice cloning models.",
     "language": "Language",
     "theme": "Theme",
     "apiConfig": "API Configuration",
@@ -133,25 +196,81 @@
     "voiceProvider": "Voice Synthesis",
     "lipsyncProvider": "Lip Sync",
     "apiKey": "API Key",
+    "enterApiKey": "Enter API key...",
     "endpoint": "Endpoint",
     "model": "Model",
+    "selectModel": "Select a model...",
     "priority": "Priority",
+    "modelPriority": "Model Priority",
+    "modelPriorityStrategy": "Model Priority Strategy",
+    "dragToReorder": "Drag to reorder fallback preference when primary services fail",
+    "manual": "Manual",
+    "autoOptimize": "Auto-Optimize",
+    "primaryEngine": "Primary Reasoning Engine",
+    "fallbackEngine": "Fallback / Specialized Tasks",
+    "status": "Status",
+    "ready": "Ready",
+    "testConnection": "Test Connection",
+    "testing": "Testing...",
+    "retry": "Retry",
+    "saving": "Saving...",
+    "update": "Update",
+    "connectionSuccessful": "Connection successful",
+    "configSavedSuccessfully": "Configuration saved successfully",
+    "noProviders": "No providers available for this service type.",
+    "configureLlmFirst": "Configure LLM providers above to set priority.",
+    "connectionStatus": {
+      "connected": "Connected",
+      "configured": "Configured",
+      "notConfigured": "Not Configured",
+      "authError": "Auth Error"
+    },
     "languages": {
       "zh": "中文",
       "en": "English"
     }
   },
   "distribution": {
-    "title": "Distribution",
+    "title": "Publish & Distribution",
     "platforms": "Platforms",
     "connectAccount": "Connect Account",
     "publishVideo": "Publish Video",
     "publishHistory": "Publish History",
     "quickPublish": "Quick Publish",
+    "selectVideo": "Select Video",
+    "selectPlatform": "Select Platform",
+    "publishSettings": "Publish Settings",
+    "videoTitle": "Video Title",
+    "videoDescription": "Video Description",
+    "hashtags": "Hashtags",
+    "liveProject": "Live Project",
+    "history": "History",
+    "readyForDistribution": "Ready for distribution",
+    "previewVideo": "Preview Video",
+    "editMetadata": "Edit Metadata",
+    "loadError": "Failed to load platform accounts. Please try again.",
+    "connectedAs": "Connected as @{{name}}",
+    "notLinked": "Not Linked",
+    "autoHashtags": "Auto-add Hashtags",
+    "syncSubtitles": "Sync Subtitles",
+    "timedRelease": "Timed Release",
+    "connectToPublish": "Connect account to enable publishing",
+    "manageConfiguration": "Manage Configuration",
+    "refreshToken": "Refresh Token",
+    "refreshing": "Refreshing...",
+    "authorize": "Authorize",
+    "readyToPublish": "Ready to publish to {{count}} platform(s).",
+    "needsAttention": "{{count}} platform(s) need attention.",
+    "saveDraft": "Save Draft",
+    "batchPublish": "Batch Publish Current Episode",
     "status": {
       "connected": "Connected",
       "disconnected": "Disconnected",
-      "expired": "Expired"
+      "expired": "Token Expired",
+      "pending": "Pending",
+      "publishing": "Publishing",
+      "published": "Published",
+      "failed": "Failed"
     }
   },
   "assetLibrary": {
@@ -161,6 +280,8 @@
     "audio": "Audio",
     "models": "Models",
     "upload": "Upload Asset",
-    "filter": "Filter"
+    "filter": "Filter",
+    "noAssets": "No assets",
+    "noAssetsDesc": "Upload your first asset file"
   }
 }

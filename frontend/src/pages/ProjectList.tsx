@@ -1,35 +1,45 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useProjects, useCreateProject } from '../hooks/useProjects'
 import type { Project } from '../hooks/useProjects'
 
-function getStatusDisplay(status: string) {
-  const statusMap: Record<string, { label: string; bgColor: string; icon?: string }> = {
-    draft: { label: 'DRAFT', bgColor: 'bg-gray-700/80' },
-    generating: { label: 'GENERATING', bgColor: 'bg-primary/90', icon: 'sync' },
-    completed: { label: 'DONE', bgColor: 'bg-black/60' },
-    queued: { label: 'QUEUED', bgColor: 'bg-amber-500/80', icon: 'hourglass_empty' },
-    failed: { label: 'FAILED', bgColor: 'bg-red-500/80', icon: 'error' },
+function useStatusDisplay() {
+  const { t } = useTranslation()
+  return (status: string) => {
+    const statusMap: Record<string, { label: string; bgColor: string; icon?: string }> = {
+      draft: { label: t('projects.status.draft'), bgColor: 'bg-gray-700/80' },
+      generating: { label: t('projects.status.generating'), bgColor: 'bg-primary/90', icon: 'sync' },
+      completed: { label: t('projects.status.completed'), bgColor: 'bg-black/60' },
+      queued: { label: t('projects.status.queued'), bgColor: 'bg-amber-500/80', icon: 'hourglass_empty' },
+      failed: { label: t('projects.status.failed'), bgColor: 'bg-red-500/80', icon: 'error' },
+    }
+    return statusMap[status] || statusMap.draft
   }
-  return statusMap[status] || statusMap.draft
 }
 
-function formatTimeAgo(dateString: string) {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
+function useFormatTimeAgo() {
+  const { t } = useTranslation()
+  return (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
 
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `Edited ${diffMins}m ago`
-  if (diffHours < 24) return `Edited ${diffHours}h ago`
-  if (diffDays === 1) return 'Edited yesterday'
-  return `Edited ${diffDays} days ago`
+    if (diffMins < 1) return t('dashboard.time.justNow')
+    if (diffMins < 60) return t('dashboard.time.minutesAgo', { count: diffMins })
+    if (diffHours < 24) return t('dashboard.time.hoursAgo', { count: diffHours })
+    if (diffDays === 1) return t('dashboard.time.yesterday')
+    return t('dashboard.time.daysAgo', { count: diffDays })
+  }
 }
 
 function ProjectCard({ project }: { project: Project }) {
+  const { t } = useTranslation()
+  const getStatusDisplay = useStatusDisplay()
+  const formatTimeAgo = useFormatTimeAgo()
   const statusInfo = getStatusDisplay(project.status)
   const isGenerating = project.status === 'generating'
   const isDraft = project.status === 'draft'
@@ -42,7 +52,7 @@ function ProjectCard({ project }: { project: Project }) {
             <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f1115] relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent animate-pulse"></div>
               <div className="loader mb-3"></div>
-              <p className="text-primary text-xs font-medium animate-pulse">Rendering...</p>
+              <p className="text-primary text-xs font-medium animate-pulse">{t('dashboard.status.rendering')}</p>
             </div>
             <div className="absolute top-2 right-2 bg-primary/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
               <span className="material-symbols-outlined text-[10px] animate-spin">sync</span>
@@ -51,7 +61,7 @@ function ProjectCard({ project }: { project: Project }) {
           </div>
           <div className="flex flex-col gap-0.5 px-1">
             <h3 className="text-white text-sm font-bold truncate">{project.title}</h3>
-            <p className="text-text-secondary text-xs">{project.episodes_count} episodes</p>
+            <p className="text-text-secondary text-xs">{project.episodes_count} {t('common.episodes')}</p>
           </div>
         </div>
       </Link>
@@ -93,6 +103,7 @@ function ProjectCard({ project }: { project: Project }) {
 }
 
 export function ProjectList() {
+  const { t } = useTranslation()
   const [page, setPage] = useState(1)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newProjectTitle, setNewProjectTitle] = useState('')
@@ -119,18 +130,18 @@ export function ProjectList() {
     <div className="flex-1 overflow-y-auto custom-scrollbar p-6 md:p-8">
       <div className="max-w-[1400px] mx-auto flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-white tracking-tight">My Projects</h1>
+          <h1 className="text-3xl font-bold text-white tracking-tight">{t('nav.projects')}</h1>
           <div className="flex gap-2">
             <select
               className="px-4 py-2 bg-surface-dark border border-border-dark rounded-lg text-sm font-medium hover:bg-border-dark transition-colors text-white appearance-none cursor-pointer"
               value={filterStatus || ''}
               onChange={(e) => setFilterStatus(e.target.value || undefined)}
             >
-              <option value="">All Status</option>
-              <option value="draft">Draft</option>
-              <option value="generating">Generating</option>
-              <option value="completed">Completed</option>
-              <option value="queued">Queued</option>
+              <option value="">{t('common.noData').replace('暂无数据', '全部状态').replace('No data', 'All Status')}</option>
+              <option value="draft">{t('projects.status.draft')}</option>
+              <option value="generating">{t('projects.status.generating')}</option>
+              <option value="completed">{t('projects.status.completed')}</option>
+              <option value="queued">{t('projects.status.queued')}</option>
             </select>
           </div>
         </div>
@@ -144,7 +155,7 @@ export function ProjectList() {
         {error && (
           <div className="flex flex-col items-center justify-center py-20 text-red-400">
             <span className="material-symbols-outlined text-4xl mb-2">error</span>
-            <p>Failed to load projects</p>
+            <p>{t('common.error')}</p>
           </div>
         )}
 
@@ -163,7 +174,7 @@ export function ProjectList() {
                 <div className="w-12 h-12 rounded-full bg-surface-dark group-hover:bg-primary/20 flex items-center justify-center transition-colors">
                   <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-3xl">add</span>
                 </div>
-                <span className="text-sm font-bold text-text-secondary group-hover:text-white">Create New Project</span>
+                <span className="text-sm font-bold text-text-secondary group-hover:text-white">{t('projects.createProject')}</span>
               </button>
             </div>
 
@@ -175,17 +186,17 @@ export function ProjectList() {
                   disabled={page === 1}
                   className="px-3 py-1.5 bg-surface-dark border border-border-dark rounded-lg text-sm font-medium hover:bg-border-dark transition-colors disabled:opacity-50"
                 >
-                  Previous
+                  {t('common.back')}
                 </button>
                 <span className="text-text-secondary text-sm">
-                  Page {page} of {totalPages}
+                  {page} / {totalPages}
                 </span>
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
                   className="px-3 py-1.5 bg-surface-dark border border-border-dark rounded-lg text-sm font-medium hover:bg-border-dark transition-colors disabled:opacity-50"
                 >
-                  Next
+                  {t('common.viewAll').replace('查看全部', '下一页').replace('View All', 'Next')}
                 </button>
               </div>
             )}
@@ -194,8 +205,8 @@ export function ProjectList() {
             {projects.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-text-secondary">
                 <span className="material-symbols-outlined text-6xl mb-4">folder_open</span>
-                <p className="text-lg font-medium mb-2">No projects yet</p>
-                <p className="text-sm">Create your first project to get started</p>
+                <p className="text-lg font-medium mb-2">{t('projects.noProjects')}</p>
+                <p className="text-sm">{t('projects.noProjectsDesc')}</p>
               </div>
             )}
           </>
@@ -206,10 +217,10 @@ export function ProjectList() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-surface-dark border border-border-dark rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold text-white mb-4">Create New Project</h2>
+            <h2 className="text-xl font-bold text-white mb-4">{t('projects.newProject')}</h2>
             <input
               type="text"
-              placeholder="Project title..."
+              placeholder={t('projects.projectNamePlaceholder')}
               value={newProjectTitle}
               onChange={(e) => setNewProjectTitle(e.target.value)}
               className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary mb-4"
@@ -220,14 +231,14 @@ export function ProjectList() {
                 onClick={() => setShowCreateModal(false)}
                 className="flex-1 px-4 py-2.5 bg-surface-dark border border-border-dark rounded-lg text-sm font-medium hover:bg-border-dark transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreateProject}
                 disabled={!newProjectTitle.trim() || createProjectMutation.isPending}
                 className="flex-1 px-4 py-2.5 bg-primary hover:bg-primary/90 rounded-lg text-sm font-bold text-white transition-colors disabled:opacity-50"
               >
-                {createProjectMutation.isPending ? 'Creating...' : 'Create'}
+                {createProjectMutation.isPending ? t('common.loading') : t('common.create')}
               </button>
             </div>
           </div>

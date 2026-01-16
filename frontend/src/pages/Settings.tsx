@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   useUserConfigs,
   useProviders,
@@ -29,6 +30,7 @@ function ProviderCard({
   isSaving,
   testResult,
 }: ProviderCardProps) {
+  const { t } = useTranslation()
   const [showApiKey, setShowApiKey] = useState(false)
   const [apiKey, setApiKey] = useState('')
   const [selectedModel, setSelectedModel] = useState(existingConfig?.model || '')
@@ -50,10 +52,10 @@ function ProviderCard({
   }
 
   const getStatusText = () => {
-    if (testResult?.success) return 'Connected'
-    if (testResult?.success === false) return 'Auth Error'
-    if (hasApiKey) return 'Configured'
-    return 'Not Configured'
+    if (testResult?.success) return t('settings.connectionStatus.connected')
+    if (testResult?.success === false) return t('settings.connectionStatus.authError')
+    if (hasApiKey) return t('settings.connectionStatus.configured')
+    return t('settings.connectionStatus.notConfigured')
   }
 
   const getStatusTextColor = () => {
@@ -93,11 +95,11 @@ function ProviderCard({
       {/* API Key / Endpoint */}
       {!provider.is_local ? (
         <div className="space-y-1">
-          <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">API Key</label>
+          <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">{t('settings.apiKey')}</label>
           <div className="relative">
             <input
               className={`w-full bg-background-dark border ${testResult?.success === false ? 'border-red-500/50' : 'border-border-dark'} rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-mono`}
-              placeholder={hasApiKey ? '••••••••••••••••' : 'Enter API key...'}
+              placeholder={hasApiKey ? '••••••••••••••••' : t('settings.enterApiKey')}
               type={showApiKey ? 'text' : 'password'}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
@@ -114,9 +116,9 @@ function ProviderCard({
         </div>
       ) : (
         <div className="space-y-1">
-          <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">Endpoint</label>
+          <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">{t('settings.endpoint')}</label>
           <div className="text-sm text-text-secondary font-mono bg-background-dark/50 px-3 py-2 rounded border border-border-dark">
-            {provider.default_endpoint || 'Not configured'}
+            {provider.default_endpoint || t('settings.connectionStatus.notConfigured')}
           </div>
         </div>
       )}
@@ -124,7 +126,7 @@ function ProviderCard({
       {/* Model Selection */}
       {testResult?.available_models && testResult.available_models.length > 0 && (
         <div className="space-y-1">
-          <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">Model</label>
+          <label className="text-xs font-bold text-text-secondary uppercase tracking-wider">{t('settings.model')}</label>
           <div className="relative">
             <select
               className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary appearance-none cursor-pointer"
@@ -134,7 +136,7 @@ function ProviderCard({
                 setIsDirty(true)
               }}
             >
-              <option value="">Select a model...</option>
+              <option value="">{t('settings.selectModel')}</option>
               {testResult.available_models.map(model => (
                 <option key={model} value={model}>{model}</option>
               ))}
@@ -156,7 +158,7 @@ function ProviderCard({
           <span className={`material-symbols-outlined text-base ${isTesting ? 'animate-spin' : ''}`}>
             {isTesting ? 'progress_activity' : testResult?.success === false ? 'refresh' : 'wifi'}
           </span>
-          {isTesting ? 'Testing...' : testResult?.success === false ? 'Retry' : 'Test Connection'}
+          {isTesting ? t('settings.testing') : testResult?.success === false ? t('settings.retry') : t('settings.testConnection')}
         </button>
         <button
           onClick={() => {
@@ -170,7 +172,7 @@ function ProviderCard({
           <span className={`material-symbols-outlined text-base ${isSaving ? 'animate-spin' : ''}`}>
             {isSaving ? 'progress_activity' : 'save'}
           </span>
-          {isSaving ? 'Saving...' : existingConfig ? 'Update' : 'Save'}
+          {isSaving ? t('settings.saving') : existingConfig ? t('settings.update') : t('common.save')}
         </button>
       </div>
 
@@ -181,7 +183,7 @@ function ProviderCard({
       {testResult?.success && (
         <p className="text-xs text-green-400 flex items-center gap-1">
           <span className="material-symbols-outlined text-sm">check_circle</span>
-          Connection successful
+          {t('settings.connectionSuccessful')}
         </p>
       )}
     </div>
@@ -209,6 +211,7 @@ function ServiceSection({
   savingId,
   testResults,
 }: ServiceSectionProps) {
+  const { t } = useTranslation()
   const serviceInfo = getServiceTypeInfo(serviceType)
 
   // Create a map of provider ID to user config
@@ -231,7 +234,7 @@ function ServiceSection({
 
       {providers.length === 0 ? (
         <div className="text-center py-4 text-text-secondary text-sm">
-          No providers available for this service type.
+          {t('settings.noProviders')}
         </div>
       ) : (
         <div className="space-y-6">
@@ -263,6 +266,7 @@ function ServiceSection({
 }
 
 function PriorityCard({ configs }: { configs: UserConfig[] }) {
+  const { t } = useTranslation()
   // Sort by priority descending
   const sortedConfigs = [...configs]
     .filter(c => c.service_type === 'llm' && c.has_api_key)
@@ -276,13 +280,13 @@ function PriorityCard({ configs }: { configs: UserConfig[] }) {
             <span className="material-symbols-outlined">tune</span>
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white">Model Priority Strategy</h3>
-            <p className="text-xs text-text-secondary">Drag to reorder fallback preference when primary services fail</p>
+            <h3 className="text-lg font-bold text-white">{t('settings.modelPriorityStrategy')}</h3>
+            <p className="text-xs text-text-secondary">{t('settings.dragToReorder')}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 bg-background-dark rounded-lg p-1 border border-border-dark">
-          <button className="px-3 py-1.5 rounded bg-primary text-white text-xs font-bold">Manual</button>
-          <button className="px-3 py-1.5 rounded hover:bg-white/5 text-text-secondary hover:text-white text-xs font-bold transition-colors">Auto-Optimize</button>
+          <button className="px-3 py-1.5 rounded bg-primary text-white text-xs font-bold">{t('settings.manual')}</button>
+          <button className="px-3 py-1.5 rounded hover:bg-white/5 text-text-secondary hover:text-white text-xs font-bold transition-colors">{t('settings.autoOptimize')}</button>
         </div>
       </div>
       <div className="space-y-3">
@@ -304,14 +308,14 @@ function PriorityCard({ configs }: { configs: UserConfig[] }) {
                   {providerInfo.name} {config.model ? `(${config.model})` : ''}
                 </span>
                 <span className="text-[10px] text-text-secondary">
-                  {index === 0 ? 'Primary Reasoning Engine' : 'Fallback / Specialized Tasks'}
+                  {index === 0 ? t('settings.primaryEngine') : t('settings.fallbackEngine')}
                 </span>
               </div>
               <div className="flex items-center gap-4 pr-2">
                 <div className="flex flex-col items-end">
-                  <span className="text-[10px] text-text-secondary">Status</span>
+                  <span className="text-[10px] text-text-secondary">{t('settings.status')}</span>
                   <span className={`text-xs font-mono ${isActive ? 'text-green-400' : 'text-text-secondary'}`}>
-                    {isActive ? 'Ready' : 'Offline'}
+                    {isActive ? t('settings.ready') : t('common.offline')}
                   </span>
                 </div>
                 <div className={`relative inline-flex h-5 w-9 items-center rounded-full ${config.is_active ? 'bg-primary' : 'bg-border-dark'}`}>
@@ -324,7 +328,7 @@ function PriorityCard({ configs }: { configs: UserConfig[] }) {
 
         {sortedConfigs.length === 0 && (
           <div className="text-center py-4 text-text-secondary text-sm">
-            Configure LLM providers above to set priority.
+            {t('settings.configureLlmFirst')}
           </div>
         )}
       </div>
@@ -333,6 +337,7 @@ function PriorityCard({ configs }: { configs: UserConfig[] }) {
 }
 
 export function Settings() {
+  const { t } = useTranslation()
   const { data: configs, isLoading: configsLoading } = useUserConfigs()
   const { data: providers, isLoading: providersLoading } = useProviders()
   const testConnectionMutation = useTestConnection()
@@ -444,16 +449,15 @@ export function Settings() {
         {/* Page Heading */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-2">
           <div className="flex flex-col gap-2 max-w-2xl">
-            <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Agent Neural Configuration</h1>
+            <h1 className="text-white text-4xl font-black leading-tight tracking-[-0.033em]">{t('settings.pageTitle')}</h1>
             <p className="text-text-secondary text-base font-normal leading-relaxed">
-              Configure API keys for the AI services that power your MangaForge agents.
-              Set up LLMs, image synthesis, video generation, and voice cloning models.
+              {t('settings.pageDescription')}
             </p>
           </div>
           {saveSuccess && (
             <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-lg text-green-400 text-sm">
               <span className="material-symbols-outlined text-base">check_circle</span>
-              Configuration saved successfully
+              {t('settings.configSavedSuccessfully')}
             </div>
           )}
         </div>

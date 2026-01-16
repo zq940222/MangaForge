@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { projectsApi } from '../api/projects'
 import { charactersApi, CharacterCreate } from '../api/characters'
 import type { Character } from '../api/characters'
 
 export function Characters() {
+  const { t } = useTranslation()
   const [selectedProjectId, setSelectedProjectId] = useState<string>('')
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newCharacter, setNewCharacter] = useState<CharacterCreate>({
@@ -64,9 +66,9 @@ export function Characters() {
         {/* Page Heading & Actions */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="flex flex-col gap-2">
-            <h1 className="text-white text-4xl font-bold tracking-tight">Character Library</h1>
+            <h1 className="text-white text-4xl font-bold tracking-tight">{t('characters.title')}</h1>
             <p className="text-[#9da6b9] text-base max-w-2xl">
-              Manage your cast, train LoRA models for visual consistency, and configure voice agents.
+              {t('characters.noCharactersDesc')}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -76,7 +78,7 @@ export function Characters() {
               className="flex items-center gap-2 px-5 h-10 rounded-lg bg-primary text-white text-sm font-bold hover:bg-blue-600 transition-colors shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="material-symbols-outlined text-[20px]">add</span>
-              <span>Add Character</span>
+              <span>{t('characters.createCharacter')}</span>
             </button>
           </div>
         </div>
@@ -84,14 +86,14 @@ export function Characters() {
         {/* Project Selector */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-surface-dark/50 p-4 rounded-xl border border-white/5 backdrop-blur-sm">
           <div className="flex items-center gap-4 w-full md:w-auto">
-            <label className="text-sm font-medium text-text-secondary whitespace-nowrap">Select Project:</label>
+            <label className="text-sm font-medium text-text-secondary whitespace-nowrap">{t('characters.selectProject')}:</label>
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
               className="flex-1 md:w-64 bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary appearance-none cursor-pointer"
               disabled={projectsLoading}
             >
-              <option value="">-- Select a project --</option>
+              <option value="">-- {t('characters.selectProject')} --</option>
               {projects.map((project) => (
                 <option key={project.id} value={project.id}>
                   {project.title}
@@ -108,7 +110,7 @@ export function Characters() {
               </div>
               <input
                 className="block w-full pl-10 pr-3 py-2.5 border-none rounded-lg leading-5 bg-[#111318] text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
-                placeholder="Search characters by name..."
+                placeholder={t('common.search')}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -121,8 +123,8 @@ export function Characters() {
         {!selectedProjectId ? (
           <div className="flex flex-col items-center justify-center py-20 text-text-secondary bg-surface-dark rounded-xl border border-border-dark">
             <span className="material-symbols-outlined text-6xl mb-4">folder_open</span>
-            <p className="text-lg font-medium mb-2">Select a Project</p>
-            <p className="text-sm">Choose a project above to view and manage its characters</p>
+            <p className="text-lg font-medium mb-2">{t('characters.selectProject')}</p>
+            <p className="text-sm">{t('characters.noCharactersDesc')}</p>
           </div>
         ) : charactersLoading ? (
           <div className="flex items-center justify-center py-20">
@@ -131,13 +133,13 @@ export function Characters() {
         ) : filteredCharacters.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-text-secondary bg-surface-dark rounded-xl border border-border-dark">
             <span className="material-symbols-outlined text-6xl mb-4">group</span>
-            <p className="text-lg font-medium mb-2">No Characters Yet</p>
-            <p className="text-sm mb-4">Add characters to define your story's cast</p>
+            <p className="text-lg font-medium mb-2">{t('characters.noCharacters')}</p>
+            <p className="text-sm mb-4">{t('characters.noCharactersDesc')}</p>
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-sm font-bold text-white transition-colors"
             >
-              Add First Character
+              {t('characters.createCharacter')}
             </button>
           </div>
         ) : (
@@ -169,12 +171,12 @@ export function Characters() {
                     <div className="absolute top-3 left-3 flex flex-col gap-2">
                       {status === 'READY' && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/30 backdrop-blur-md">
-                          <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> Ready
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span> {t('projects.status.completed')}
                         </span>
                       )}
                       {status === 'DRAFT' && (
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold bg-gray-700/50 text-gray-300 border border-gray-600/30 backdrop-blur-md">
-                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Draft
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span> {t('projects.status.draft')}
                         </span>
                       )}
                     </div>
@@ -182,7 +184,7 @@ export function Characters() {
                     {/* Delete Button */}
                     <button
                       onClick={() => {
-                        if (confirm('Delete this character?')) {
+                        if (confirm(t('common.delete') + '?')) {
                           deleteCharacterMutation.mutate(char.id)
                         }
                       }}
@@ -197,7 +199,7 @@ export function Characters() {
                     <div>
                       <h3 className="text-white text-xl font-bold">{char.name}</h3>
                       <p className="text-[#9da6b9] text-sm">
-                        {char.gender === 'male' ? 'Male' : char.gender === 'female' ? 'Female' : char.gender || 'Unknown'}
+                        {char.gender === 'male' ? t('characters.genders.male') : char.gender === 'female' ? t('characters.genders.female') : char.gender ? t('characters.genders.other') : ''}
                         {char.age_range && ` · ${char.age_range}`}
                       </p>
                     </div>
@@ -211,13 +213,13 @@ export function Characters() {
                       <div className="flex items-center justify-between gap-2 p-2 rounded bg-red-500/10 border border-red-500/20">
                         <div className="flex items-center gap-2">
                           <span className="material-symbols-outlined text-red-400 text-[18px]">mic_off</span>
-                          <span className="text-xs text-red-100 font-medium">Voice Missing</span>
+                          <span className="text-xs text-red-100 font-medium">{t('characters.voiceSample')}</span>
                         </div>
                       </div>
                     ) : char.voice_id ? (
                       <div className="flex items-center gap-2 p-2 rounded bg-[#111318] border border-gray-800">
                         <span className="material-symbols-outlined text-primary text-[18px]">graphic_eq</span>
-                        <span className="text-xs text-white font-medium">Voice Ready</span>
+                        <span className="text-xs text-white font-medium">{t('characters.voiceSample')}</span>
                       </div>
                     ) : null}
                   </div>
@@ -233,8 +235,8 @@ export function Characters() {
               <div className="w-16 h-16 rounded-full bg-[#282e39] group-hover:bg-primary/20 flex items-center justify-center mb-4 transition-colors">
                 <span className="material-symbols-outlined text-gray-400 group-hover:text-primary text-[32px]">add</span>
               </div>
-              <h3 className="text-white text-lg font-bold">Add New Character</h3>
-              <p className="text-[#9da6b9] text-sm mt-1">Create from scratch</p>
+              <h3 className="text-white text-lg font-bold">{t('characters.newCharacter')}</h3>
+              <p className="text-[#9da6b9] text-sm mt-1">{t('common.create')}</p>
             </button>
           </div>
         )}
@@ -244,16 +246,16 @@ export function Characters() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-surface-dark border border-border-dark rounded-xl p-6 w-full max-w-lg">
-            <h2 className="text-xl font-bold text-white mb-4">Add New Character</h2>
+            <h2 className="text-xl font-bold text-white mb-4">{t('characters.newCharacter')}</h2>
 
             <div className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-text-secondary uppercase tracking-wider block mb-1">
-                  Name *
+                  {t('characters.name')} *
                 </label>
                 <input
                   type="text"
-                  placeholder="Character name..."
+                  placeholder={t('characters.namePlaceholder')}
                   value={newCharacter.name}
                   onChange={(e) => setNewCharacter({ ...newCharacter, name: e.target.value })}
                   className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary"
@@ -264,44 +266,44 @@ export function Characters() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold text-text-secondary uppercase tracking-wider block mb-1">
-                    Gender
+                    {t('characters.gender')}
                   </label>
                   <select
                     value={newCharacter.gender}
                     onChange={(e) => setNewCharacter({ ...newCharacter, gender: e.target.value })}
                     className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary appearance-none cursor-pointer"
                   >
-                    <option value="">Select...</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
+                    <option value="">--</option>
+                    <option value="male">{t('characters.genders.male')}</option>
+                    <option value="female">{t('characters.genders.female')}</option>
+                    <option value="other">{t('characters.genders.other')}</option>
                   </select>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-text-secondary uppercase tracking-wider block mb-1">
-                    Age Range
+                    {t('characters.ageRange')}
                   </label>
                   <select
                     value={newCharacter.age_range}
                     onChange={(e) => setNewCharacter({ ...newCharacter, age_range: e.target.value })}
                     className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary appearance-none cursor-pointer"
                   >
-                    <option value="">Select...</option>
-                    <option value="child">Child</option>
-                    <option value="teen">Teen</option>
-                    <option value="young_adult">Young Adult</option>
-                    <option value="middle_aged">Middle Aged</option>
-                    <option value="elderly">Elderly</option>
+                    <option value="">--</option>
+                    <option value="child">{t('characters.ageRanges.child')}</option>
+                    <option value="teen">{t('characters.ageRanges.teen')}</option>
+                    <option value="young_adult">{t('characters.ageRanges.young_adult')}</option>
+                    <option value="adult">{t('characters.ageRanges.adult')}</option>
+                    <option value="elderly">{t('characters.ageRanges.elderly')}</option>
                   </select>
                 </div>
               </div>
 
               <div>
                 <label className="text-xs font-bold text-text-secondary uppercase tracking-wider block mb-1">
-                  Description
+                  {t('characters.description')}
                 </label>
                 <textarea
-                  placeholder="Physical appearance, clothing style..."
+                  placeholder={t('characters.descriptionPlaceholder')}
                   value={newCharacter.description}
                   onChange={(e) => setNewCharacter({ ...newCharacter, description: e.target.value })}
                   className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary resize-none"
@@ -311,11 +313,11 @@ export function Characters() {
 
               <div>
                 <label className="text-xs font-bold text-text-secondary uppercase tracking-wider block mb-1">
-                  Personality
+                  {t('characters.personality')}
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g., cheerful, mysterious, calm..."
+                  placeholder={t('characters.personalityPlaceholder')}
                   value={newCharacter.personality}
                   onChange={(e) => setNewCharacter({ ...newCharacter, personality: e.target.value })}
                   className="w-full bg-background-dark border border-border-dark rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary"
@@ -328,14 +330,14 @@ export function Characters() {
                 onClick={() => setShowCreateModal(false)}
                 className="flex-1 px-4 py-2.5 bg-surface-dark border border-border-dark rounded-lg text-sm font-medium hover:bg-border-dark transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={() => createCharacterMutation.mutate(newCharacter)}
                 disabled={!newCharacter.name.trim() || createCharacterMutation.isPending}
                 className="flex-1 px-4 py-2.5 bg-primary hover:bg-primary/90 rounded-lg text-sm font-bold text-white transition-colors disabled:opacity-50"
               >
-                {createCharacterMutation.isPending ? 'Creating...' : 'Create'}
+                {createCharacterMutation.isPending ? t('common.loading') : t('common.create')}
               </button>
             </div>
           </div>

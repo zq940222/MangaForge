@@ -1,23 +1,30 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useProjects } from '../hooks/useProjects'
 import type { Project } from '../hooks/useProjects'
 
-function formatTimeAgo(dateString: string) {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
+function useFormatTimeAgo() {
+  const { t } = useTranslation()
 
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `Edited ${diffMins}m ago`
-  if (diffHours < 24) return `Edited ${diffHours}h ago`
-  if (diffDays === 1) return 'Edited yesterday'
-  return `Edited ${diffDays} days ago`
+  return (dateString: string) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+
+    if (diffMins < 1) return t('dashboard.time.justNow')
+    if (diffMins < 60) return t('dashboard.time.minutesAgo', { count: diffMins })
+    if (diffHours < 24) return t('dashboard.time.hoursAgo', { count: diffHours })
+    if (diffDays === 1) return t('dashboard.time.yesterday')
+    return t('dashboard.time.daysAgo', { count: diffDays })
+  }
 }
 
 function RecentProjectCard({ project }: { project: Project }) {
+  const { t } = useTranslation()
+  const formatTimeAgo = useFormatTimeAgo()
   const isGenerating = project.status === 'generating'
   const isDraft = project.status === 'draft'
   const isCompleted = project.status === 'completed'
@@ -31,16 +38,16 @@ function RecentProjectCard({ project }: { project: Project }) {
             <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f1115] relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent animate-pulse"></div>
               <div className="loader mb-3"></div>
-              <p className="text-primary text-xs font-medium animate-pulse">Rendering...</p>
+              <p className="text-primary text-xs font-medium animate-pulse">{t('dashboard.status.rendering')}</p>
             </div>
             <div className="absolute top-2 right-2 bg-primary/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
               <span className="material-symbols-outlined text-[10px] animate-spin">sync</span>
-              GENERATING
+              {t('dashboard.status.generating')}
             </div>
           </div>
           <div className="flex flex-col gap-0.5 px-1">
             <h3 className="text-white text-sm font-bold truncate">{project.title}</h3>
-            <p className="text-text-secondary text-xs">{project.episodes_count} episodes</p>
+            <p className="text-text-secondary text-xs">{project.episodes_count} {t('common.episodes')}</p>
           </div>
         </div>
       </Link>
@@ -58,18 +65,18 @@ function RecentProjectCard({ project }: { project: Project }) {
           {isCompleted && (
             <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded border border-white/10 flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-              DONE
+              {t('dashboard.status.done')}
             </div>
           )}
           {isDraft && (
             <div className="absolute top-2 right-2 bg-gray-700/80 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded border border-white/10">
-              DRAFT
+              {t('dashboard.status.draft')}
             </div>
           )}
           {isQueued && (
             <div className="absolute top-2 right-2 bg-amber-500/80 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-0.5 rounded border border-white/10 flex items-center gap-1">
               <span className="material-symbols-outlined text-[10px]">hourglass_empty</span>
-              QUEUED
+              {t('dashboard.status.queued')}
             </div>
           )}
 
@@ -90,6 +97,7 @@ function RecentProjectCard({ project }: { project: Project }) {
 }
 
 export function Dashboard() {
+  const { t } = useTranslation()
   const { data: projectsData, isLoading } = useProjects(1, 4)
   const projects = projectsData?.items || []
   const totalProjects = projectsData?.total || 0
@@ -99,25 +107,25 @@ export function Dashboard() {
       <div className="max-w-[1400px] mx-auto flex flex-col gap-8">
         {/* Welcome Section */}
         <div>
-          <h1 className="text-3xl font-black tracking-tight text-white mb-2">Welcome back</h1>
-          <p className="text-text-secondary">Your AI agents are ready. Start creating amazing manga videos.</p>
+          <h1 className="text-3xl font-black tracking-tight text-white mb-2">{t('dashboard.welcome')}</h1>
+          <p className="text-text-secondary">{t('dashboard.welcomeDesc')}</p>
         </div>
 
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex flex-col gap-1 rounded-xl p-5 border border-border-dark bg-surface-dark hover:border-primary/30 transition-colors">
             <div className="flex justify-between items-start">
-              <p className="text-text-secondary text-sm font-medium">Total Projects</p>
+              <p className="text-text-secondary text-sm font-medium">{t('dashboard.stats.totalProjects')}</p>
               <span className="material-symbols-outlined text-primary/70">folder</span>
             </div>
             <div className="flex items-baseline gap-2 mt-2">
               <p className="text-white text-3xl font-bold tracking-tight">{totalProjects}</p>
             </div>
-            <p className="text-text-secondary text-xs mt-1">Projects in your workspace</p>
+            <p className="text-text-secondary text-xs mt-1">{t('dashboard.projectsInWorkspace')}</p>
           </div>
           <div className="flex flex-col gap-1 rounded-xl p-5 border border-border-dark bg-surface-dark hover:border-primary/30 transition-colors">
             <div className="flex justify-between items-start">
-              <p className="text-text-secondary text-sm font-medium">Active Generations</p>
+              <p className="text-text-secondary text-sm font-medium">{t('dashboard.stats.activeGenerations')}</p>
               <span className="material-symbols-outlined text-primary/70">bolt</span>
             </div>
             <div className="flex items-baseline gap-2 mt-2">
@@ -125,11 +133,11 @@ export function Dashboard() {
                 {projects.filter(p => p.status === 'generating' || p.status === 'queued').length}
               </p>
             </div>
-            <p className="text-text-secondary text-xs mt-1">Currently processing</p>
+            <p className="text-text-secondary text-xs mt-1">{t('dashboard.currentlyProcessing')}</p>
           </div>
           <div className="flex flex-col gap-1 rounded-xl p-5 border border-border-dark bg-surface-dark hover:border-primary/30 transition-colors">
             <div className="flex justify-between items-start">
-              <p className="text-text-secondary text-sm font-medium">Completed</p>
+              <p className="text-text-secondary text-sm font-medium">{t('dashboard.stats.completed')}</p>
               <span className="material-symbols-outlined text-primary/70">check_circle</span>
             </div>
             <div className="flex items-baseline gap-2 mt-2">
@@ -137,7 +145,7 @@ export function Dashboard() {
                 {projects.filter(p => p.status === 'completed').length}
               </p>
             </div>
-            <p className="text-text-secondary text-xs mt-1">Ready to publish</p>
+            <p className="text-text-secondary text-xs mt-1">{t('dashboard.readyToPublish')}</p>
           </div>
         </div>
 
@@ -146,8 +154,8 @@ export function Dashboard() {
           {/* Recent Projects */}
           <div className="xl:col-span-3 flex flex-col gap-4">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-bold text-white tracking-tight">Recent Projects</h2>
-              <Link to="/projects" className="text-sm text-primary font-medium hover:text-white transition-colors">View All</Link>
+              <h2 className="text-xl font-bold text-white tracking-tight">{t('dashboard.recentProjects')}</h2>
+              <Link to="/projects" className="text-sm text-primary font-medium hover:text-white transition-colors">{t('common.viewAll')}</Link>
             </div>
 
             {isLoading ? (
@@ -157,12 +165,12 @@ export function Dashboard() {
             ) : projects.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-text-secondary bg-surface-dark rounded-xl border border-border-dark">
                 <span className="material-symbols-outlined text-5xl mb-3">folder_open</span>
-                <p className="text-sm mb-3">No projects yet</p>
+                <p className="text-sm mb-3">{t('dashboard.noProjects')}</p>
                 <Link
                   to="/projects"
                   className="px-4 py-2 bg-primary hover:bg-primary/90 rounded-lg text-sm font-bold text-white transition-colors"
                 >
-                  Create Your First Project
+                  {t('dashboard.createFirstProject')}
                 </Link>
               </div>
             ) : (
@@ -177,13 +185,13 @@ export function Dashboard() {
           {/* System Status */}
           <div className="xl:col-span-1 flex flex-col gap-4">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-bold text-white tracking-tight">System Status</h2>
+              <h2 className="text-xl font-bold text-white tracking-tight">{t('dashboard.systemStatus')}</h2>
               <div className="flex items-center gap-1">
                 <span className="relative flex h-2.5 w-2.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                 </span>
-                <span className="text-xs text-emerald-500 font-medium ml-1">Online</span>
+                <span className="text-xs text-emerald-500 font-medium ml-1">{t('common.online')}</span>
               </div>
             </div>
             <div className="bg-surface-dark rounded-xl border border-border-dark overflow-hidden flex flex-col">
@@ -195,11 +203,11 @@ export function Dashboard() {
                       <span className="material-symbols-outlined text-lg">description</span>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">ScriptWriter</p>
-                      <p className="text-xs text-text-secondary">LLM Agent</p>
+                      <p className="text-sm font-bold text-white">{t('dashboard.agents.scriptWriter')}</p>
+                      <p className="text-xs text-text-secondary">{t('dashboard.agents.llmAgent')}</p>
                     </div>
                   </div>
-                  <span className="px-2 py-1 rounded bg-[#282e39] text-xs text-white font-medium">Idle</span>
+                  <span className="px-2 py-1 rounded bg-[#282e39] text-xs text-white font-medium">{t('common.idle')}</span>
                 </div>
               </div>
 
@@ -211,11 +219,11 @@ export function Dashboard() {
                       <span className="material-symbols-outlined text-lg">face</span>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">CharGen</p>
-                      <p className="text-xs text-text-secondary">Image Generation</p>
+                      <p className="text-sm font-bold text-white">{t('dashboard.agents.charGen')}</p>
+                      <p className="text-xs text-text-secondary">{t('dashboard.agents.imageGeneration')}</p>
                     </div>
                   </div>
-                  <span className="px-2 py-1 rounded bg-[#282e39] text-xs text-white font-medium">Idle</span>
+                  <span className="px-2 py-1 rounded bg-[#282e39] text-xs text-white font-medium">{t('common.idle')}</span>
                 </div>
               </div>
 
@@ -227,11 +235,11 @@ export function Dashboard() {
                       <span className="material-symbols-outlined text-lg">movie</span>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">VideoRenderer</p>
-                      <p className="text-xs text-text-secondary">Video Generation</p>
+                      <p className="text-sm font-bold text-white">{t('dashboard.agents.videoRenderer')}</p>
+                      <p className="text-xs text-text-secondary">{t('dashboard.agents.videoGeneration')}</p>
                     </div>
                   </div>
-                  <span className="px-2 py-1 rounded bg-[#282e39] text-xs text-white font-medium">Idle</span>
+                  <span className="px-2 py-1 rounded bg-[#282e39] text-xs text-white font-medium">{t('common.idle')}</span>
                 </div>
               </div>
             </div>
@@ -241,10 +249,10 @@ export function Dashboard() {
               <div className="flex items-start gap-3">
                 <span className="material-symbols-outlined text-primary text-xl mt-0.5">tips_and_updates</span>
                 <div>
-                  <p className="text-sm font-bold text-white">Quick Start</p>
-                  <p className="text-xs text-text-secondary mt-1 leading-relaxed">Create a new project and let AI agents transform your script into a manga video.</p>
+                  <p className="text-sm font-bold text-white">{t('dashboard.quickStart')}</p>
+                  <p className="text-xs text-text-secondary mt-1 leading-relaxed">{t('dashboard.quickStartDesc')}</p>
                   <Link to="/projects" className="text-xs text-primary font-bold mt-2 hover:underline inline-block">
-                    Get Started
+                    {t('common.getStarted')}
                   </Link>
                 </div>
               </div>

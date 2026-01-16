@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { usePlatformAccounts, useRefreshPlatformToken, useCreatePlatformAccount, useUpdatePlatformAccount, getPlatformConfig } from '../hooks/usePlatforms'
 import type { PlatformAccount } from '../api/platforms'
 
@@ -14,6 +15,7 @@ function PlatformCard({
   onUpdateSettings: (id: string, settings: Record<string, unknown>) => void
   isRefreshing: boolean
 }) {
+  const { t } = useTranslation()
   const config = getPlatformConfig(account.platform)
   const isConnected = account.status === 'connected'
   const isExpired = account.status === 'expired'
@@ -64,18 +66,18 @@ function PlatformCard({
           {isConnected && (
             <p className="text-emerald-400 text-sm flex items-center gap-1">
               <span className="material-symbols-outlined text-sm">check_circle</span>
-              Connected as @{account.account_name}
+              {t('distribution.connectedAs', { name: account.account_name })}
             </p>
           )}
           {isExpired && (
             <p className="text-amber-500 text-sm flex items-center gap-1 font-medium">
               <span className="material-symbols-outlined text-sm">warning</span>
-              Token Expired
+              {t('distribution.status.expired')}
             </p>
           )}
           {isDisconnected && (
             <p className="text-slate-500 text-sm flex items-center gap-1">
-              Not Linked
+              {t('distribution.notLinked')}
             </p>
           )}
         </div>
@@ -89,7 +91,7 @@ function PlatformCard({
           <label className="flex items-center justify-between cursor-pointer group/toggle">
             <div className="flex items-center gap-2 text-slate-300 group-hover/toggle:text-white transition-colors text-sm">
               <span className="material-symbols-outlined text-lg text-slate-500">tag</span>
-              Auto-add Hashtags
+              {t('distribution.autoHashtags')}
             </div>
             <div className="relative inline-flex items-center cursor-pointer">
               <input
@@ -109,7 +111,7 @@ function PlatformCard({
           <label className="flex items-center justify-between cursor-pointer group/toggle">
             <div className="flex items-center gap-2 text-slate-300 group-hover/toggle:text-white transition-colors text-sm">
               <span className="material-symbols-outlined text-lg text-slate-500">subtitles</span>
-              Sync Subtitles
+              {t('distribution.syncSubtitles')}
             </div>
             <div className="relative inline-flex items-center cursor-pointer">
               <input
@@ -134,14 +136,14 @@ function PlatformCard({
           <label className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-slate-300 text-sm">
               <span className="material-symbols-outlined text-lg text-slate-500">tag</span>
-              Auto-add Hashtags
+              {t('distribution.autoHashtags')}
             </div>
             <div className="w-11 h-6 bg-slate-700 rounded-full relative after:absolute after:top-[2px] after:start-[2px] after:bg-gray-400 after:rounded-full after:h-5 after:w-5"></div>
           </label>
           <label className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-slate-300 text-sm">
               <span className="material-symbols-outlined text-lg text-slate-500">schedule</span>
-              Timed Release
+              {t('distribution.timedRelease')}
             </div>
             <div className="w-11 h-6 bg-slate-700 rounded-full relative after:absolute after:top-[2px] after:start-[2px] after:bg-gray-400 after:rounded-full after:h-5 after:w-5"></div>
           </label>
@@ -151,7 +153,7 @@ function PlatformCard({
       {isDisconnected && (
         <div className="flex flex-col items-center justify-center py-4 text-center gap-2">
           <span className="material-symbols-outlined text-4xl text-slate-700">link_off</span>
-          <p className="text-slate-500 text-sm">Connect account to enable publishing</p>
+          <p className="text-slate-500 text-sm">{t('distribution.connectToPublish')}</p>
         </div>
       )}
 
@@ -159,7 +161,7 @@ function PlatformCard({
       <div className="mt-auto pt-2">
         {isConnected && (
           <button className="w-full py-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-sm font-medium transition-colors border border-transparent hover:border-white/10">
-            Manage Configuration
+            {t('distribution.manageConfiguration')}
           </button>
         )}
         {isExpired && (
@@ -168,13 +170,13 @@ function PlatformCard({
             disabled={isRefreshing}
             className="w-full py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black text-sm font-bold transition-colors shadow-lg shadow-amber-500/20 disabled:opacity-50"
           >
-            {isRefreshing ? 'Refreshing...' : 'Refresh Token'}
+            {isRefreshing ? t('distribution.refreshing') : t('distribution.refreshToken')}
           </button>
         )}
         {isDisconnected && (
           <button className="w-full py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-colors shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
             <span className="material-symbols-outlined text-sm">add_link</span>
-            Authorize
+            {t('distribution.authorize')}
           </button>
         )}
       </div>
@@ -190,6 +192,7 @@ function EmptyPlatformCard({
   platformId: string
   onAuthorize: (platformId: string) => void
 }) {
+  const { t } = useTranslation()
   const config = getPlatformConfig(platformId)
 
   return (
@@ -210,7 +213,7 @@ function EmptyPlatformCard({
         <div>
           <h4 className="text-white font-bold text-lg">{config.name}</h4>
           <p className="text-slate-500 text-sm flex items-center gap-1">
-            Not Linked
+            {t('distribution.notLinked')}
           </p>
         </div>
       </div>
@@ -219,7 +222,7 @@ function EmptyPlatformCard({
 
       <div className="flex flex-col items-center justify-center py-4 text-center gap-2">
         <span className="material-symbols-outlined text-4xl text-slate-700">link_off</span>
-        <p className="text-slate-500 text-sm">Connect account to enable publishing</p>
+        <p className="text-slate-500 text-sm">{t('distribution.connectToPublish')}</p>
       </div>
 
       <div className="mt-auto pt-2">
@@ -228,7 +231,7 @@ function EmptyPlatformCard({
           className="w-full py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-colors shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
         >
           <span className="material-symbols-outlined text-sm">add_link</span>
-          Authorize
+          {t('distribution.authorize')}
         </button>
       </div>
     </div>
@@ -236,6 +239,7 @@ function EmptyPlatformCard({
 }
 
 export function Distribution() {
+  const { t } = useTranslation()
   const { data: accounts, isLoading, error } = usePlatformAccounts()
   const refreshTokenMutation = useRefreshPlatformToken()
   const createAccountMutation = useCreatePlatformAccount()
@@ -285,14 +289,14 @@ export function Distribution() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 text-text-secondary text-xs font-medium uppercase tracking-wider">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            Live Project
+            {t('distribution.liveProject')}
           </div>
-          <h2 className="text-white text-3xl font-bold leading-tight">Publish & Distribution</h2>
+          <h2 className="text-white text-3xl font-bold leading-tight">{t('distribution.title')}</h2>
         </div>
         <div className="flex items-center gap-4">
           <button className="bg-surface-dark hover:bg-border-dark text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-border-dark flex items-center gap-2">
             <span className="material-symbols-outlined text-lg">history</span>
-            History
+            {t('distribution.history')}
           </button>
         </div>
       </div>
@@ -306,7 +310,7 @@ export function Distribution() {
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <p className="text-text-secondary text-sm font-medium">Ready for distribution</p>
+            <p className="text-text-secondary text-sm font-medium">{t('distribution.readyForDistribution')}</p>
             <h3 className="text-white text-2xl font-bold tracking-tight">Episode 12 - The Neon Samurai</h3>
             <div className="flex gap-2 mt-1">
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">4K</span>
@@ -316,8 +320,8 @@ export function Distribution() {
           </div>
         </div>
         <div className="flex gap-3 w-full md:w-auto">
-          <button className="flex-1 md:flex-none px-4 py-2.5 rounded-lg border border-border-dark hover:bg-white/5 text-white text-sm font-medium transition-colors">Preview Video</button>
-          <button className="flex-1 md:flex-none px-4 py-2.5 rounded-lg border border-border-dark hover:bg-white/5 text-white text-sm font-medium transition-colors">Edit Metadata</button>
+          <button className="flex-1 md:flex-none px-4 py-2.5 rounded-lg border border-border-dark hover:bg-white/5 text-white text-sm font-medium transition-colors">{t('distribution.previewVideo')}</button>
+          <button className="flex-1 md:flex-none px-4 py-2.5 rounded-lg border border-border-dark hover:bg-white/5 text-white text-sm font-medium transition-colors">{t('distribution.editMetadata')}</button>
         </div>
       </div>
 
@@ -330,7 +334,7 @@ export function Distribution() {
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400">
-          Failed to load platform accounts. Please try again.
+          {t('distribution.loadError')}
         </div>
       )}
 
@@ -368,21 +372,21 @@ export function Distribution() {
           <div className="flex items-center gap-3 text-sm text-text-secondary">
             <span className="material-symbols-outlined animate-spin text-primary">sync</span>
             <span className="hidden md:inline">
-              Ready to publish to {connectedCount} platform{connectedCount !== 1 ? 's' : ''}.
-              {expiredCount > 0 && ` ${expiredCount} platform${expiredCount !== 1 ? 's' : ''} need${expiredCount === 1 ? 's' : ''} attention.`}
+              {t('distribution.readyToPublish', { count: connectedCount })}
+              {expiredCount > 0 && ` ${t('distribution.needsAttention', { count: expiredCount })}`}
             </span>
             <span className="md:hidden">
-              {connectedCount} Ready. {expiredCount > 0 && `${expiredCount} Error.`}
+              {connectedCount} {t('settings.ready')}. {expiredCount > 0 && `${expiredCount} ${t('common.error')}.`}
             </span>
           </div>
           <div className="flex gap-4 w-full md:w-auto">
-            <button className="px-6 py-3 rounded-xl border border-white/10 text-white font-medium hover:bg-white/5 transition-colors flex-1 md:flex-none">Save Draft</button>
+            <button className="px-6 py-3 rounded-xl border border-white/10 text-white font-medium hover:bg-white/5 transition-colors flex-1 md:flex-none">{t('distribution.saveDraft')}</button>
             <button
               disabled={connectedCount === 0}
               className="px-8 py-3 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-[0_0_20px_rgba(19,91,236,0.4)] hover:shadow-[0_0_25px_rgba(19,91,236,0.6)] transition-all flex items-center justify-center gap-2 flex-1 md:flex-none transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="material-symbols-outlined">rocket_launch</span>
-              Batch Publish Current Episode
+              {t('distribution.batchPublish')}
             </button>
           </div>
         </div>
