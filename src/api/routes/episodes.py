@@ -243,3 +243,123 @@ async def delete_episode(
         )
 
     await db.delete(episode)
+
+
+@router.post("/{episode_id}/expand", response_model=EpisodeResponse)
+async def expand_script_to_shots(
+    project_id: str,
+    episode_id: str,
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_current_user_id),
+):
+    """
+    扩展剧本为分镜
+
+    使用 LLM 将用户的剧本/故事大纲解析为结构化分镜数据
+    """
+    project = await _get_project(project_id, user_id, db)
+
+    result = await db.execute(
+        select(Episode).where(
+            Episode.id == episode_id,
+            Episode.project_id == project_id,
+        )
+    )
+    episode = result.scalar_one_or_none()
+
+    if not episode:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Episode not found",
+        )
+
+    if not episode.script_input:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Episode has no script input. Please add a story outline first.",
+        )
+
+    # 导入必要的组件
+    from src.agents.script_agent import ScriptAgent
+    from src.agents.storyboard_agent import StoryboardAgent
+
+    try:
+        # 1. 解析剧本
+        script_agent = ScriptAgent()
+        script_result = await script_agent.run({
+            "user_input": episode.script_input,
+            "style": project.style,
+            "target_platform": project.target_platform,
+        })
+
+        if script_result.get("error"):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Script parsing failed: {script_result['error']}",
+            )
+
+        # 更新解析后的剧本
+        episode.script_parsed = script_result.get("script", {})
+
+        # 2. 生成分镜
+        storyboard_agent = StoryboardAgent()
+        storyboard_result = await storyboard_agent.run({
+            "script": episode.script_parsed,
+            "style": project.style,
+            "aspect_ratio": project.aspect_ratio,
+        })
+
+        if storyboard_result.get("error"):
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Storyboard generation failed: {storyboard_result['error']}",
+            )
+
+        episode.storyboard = storyboard_result.get("storyboard", [])
+
+        # 3. 创建 Shot 记录
+        shots_data = episode.storyboard if isinstance(episode.storyboard, list) else episode.storyboard.get("shots", [])
+
+        for shot_data in shots_data:
+            shot = Shot(
+                episode_id=episode.id,
+                shot_number=shot_data.get("shot_id", 0),
+                duration=shot_data.get("duration", 5.0),
+                scene_description=shot_data.get("scene_description", ""),
+                camera_type=shot_data.get("camera_type", "medium_shot"),
+                camera_movement=shot_data.get("camera_movement", "static"),
+                dialog=shot_data.get("dialog", {}),
+                image_prompt=shot_data.get("image_prompt", ""),
+                negative_prompt=shot_data.get("negative_prompt", ""),
+                video_prompt=shot_data.get("action", ""),
+                status="pending",
+            )
+            db.add(shot)
+
+        episode.status = "script_done"
+        await db.commit()
+        await db.refresh(episode)
+
+        # 获取创建的 shots
+        shots_result = await db.execute(
+            select(Shot)
+            .where(Shot.episode_id == episode.id)
+            .order_by(Shot.shot_number)
+        )
+        shots = shots_result.scalars().all()
+
+        return EpisodeResponse(
+            **{
+                **episode.__dict__,
+                "shots_count": len(shots),
+                "shots": [ShotResponse.model_validate(s) for s in shots],
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Expand failed: {str(e)}",
+        )

@@ -249,7 +249,7 @@ services:
   # RabbitMQ Message Queue
   # ===========================================
   rabbitmq:
-    image: rabbitmq:3-management-alpine
+    image: rabbitmq:management-alpine
     container_name: mangaforge-rabbitmq-dev
     ports:
       - "5672:5672"

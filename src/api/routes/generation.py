@@ -82,11 +82,15 @@ async def start_generation(
 
     # 更新 episode 状态
     episode.status = "processing"
-    await db.flush()
+    await db.commit()
 
-    # TODO: 触发 Celery 任务
-    # from src.workers.tasks.generation import generate_manga_video
-    # generate_manga_video.delay(task.id)
+    # 触发 Celery 任务
+    from src.workers.tasks.generation import generate_manga_video
+    celery_task = generate_manga_video.delay(str(task.id))
+
+    # 更新 celery_task_id
+    task.celery_task_id = celery_task.id
+    await db.commit()
 
     return GenerationResponse(
         task_id=task.id,

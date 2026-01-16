@@ -54,8 +54,9 @@ SERVICE_REGISTRY: dict[ServiceType, dict[str, Type[BaseService]]] = {
 class ServiceFactory:
     """服务工厂"""
 
-    def __init__(self):
+    def __init__(self, user_id: Optional[str] = None):
         self.settings = get_settings()
+        self.user_id = user_id
         self._service_cache: dict[str, BaseService] = {}
 
     def _get_cache_key(self, service_type: ServiceType, provider: str) -> str:

@@ -74,5 +74,28 @@ export function useDeleteEpisode() {
   })
 }
 
+/**
+ * 扩展剧本为分镜
+ */
+export function useExpandEpisode() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ projectId, episodeId }: { projectId: string; episodeId: string }) =>
+      episodesApi.expand(projectId, episodeId),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.episodes(variables.projectId) })
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.episode(variables.projectId, variables.episodeId),
+      })
+      // 直接设置数据以避免重新获取
+      queryClient.setQueryData(
+        [...QUERY_KEYS.episode(variables.projectId, variables.episodeId), true],
+        data
+      )
+    },
+  })
+}
+
 // Re-export types for convenience
 export type { Episode, Shot, EpisodeCreate, EpisodeUpdate }

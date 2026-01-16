@@ -4,7 +4,7 @@ Task Model - 异步任务队列
 from datetime import datetime
 from typing import Any, Optional, TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, String, Text, Integer, DateTime
+from sqlalchemy import ForeignKey, String, Text, Integer, Float, DateTime
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -58,7 +58,7 @@ class Task(Base, UUIDMixin, TimestampMixin):
     celery_task_id: Mapped[Optional[str]] = mapped_column(
         String(100), nullable=True
     )  # Celery task ID
-    progress: Mapped[int] = mapped_column(Integer, default=0)  # 进度百分比 0-100
+    progress: Mapped[float] = mapped_column(Float, default=0.0)  # 进度百分比 0-100
 
     # 时间戳
     started_at: Mapped[Optional[datetime]] = mapped_column(
@@ -71,6 +71,9 @@ class Task(Base, UUIDMixin, TimestampMixin):
     # Relationships
     project: Mapped[Optional["Project"]] = relationship(
         "Project", back_populates="tasks"
+    )
+    episode: Mapped[Optional["Episode"]] = relationship(
+        "Episode", foreign_keys=[episode_id]
     )
 
     def __repr__(self) -> str:
@@ -97,6 +100,6 @@ class Task(Base, UUIDMixin, TimestampMixin):
         self.error = error
         self.completed_at = datetime.utcnow()
 
-    def update_progress(self, progress: int) -> None:
+    def update_progress(self, progress: float) -> None:
         """更新进度"""
-        self.progress = min(100, max(0, progress))
+        self.progress = min(100.0, max(0.0, progress))

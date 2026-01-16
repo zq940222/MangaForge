@@ -4,12 +4,15 @@ import { generationApi, GenerationRequest } from '../api/generation'
 import { useGenerationStore, GenerationStage } from '../stores/generationStore'
 import { useWebSocket } from './useWebSocket'
 
-export function useGeneration(taskId?: string) {
+export function useGeneration(initialTaskId?: string) {
   const store = useGenerationStore()
+
+  // Use store's taskId (set after starting generation) or the initial one passed in
+  const activeTaskId = store.taskId ?? initialTaskId
 
   // WebSocket for real-time updates
   useWebSocket({
-    taskId,
+    taskId: activeTaskId ?? undefined,
     onMessage: (message) => {
       if (message.type === 'progress') {
         const stage = message.data.stage as GenerationStage
@@ -58,17 +61,17 @@ export function useGeneration(taskId?: string) {
 
   // Status polling (fallback if WebSocket fails)
   useQuery({
-    queryKey: ['generation-status', taskId],
-    queryFn: () => generationApi.getStatus(taskId!),
-    enabled: !!taskId && store.status === 'running',
+    queryKey: ['generation-status', activeTaskId],
+    queryFn: () => generationApi.getStatus(activeTaskId!),
+    enabled: !!activeTaskId && store.status === 'running',
     refetchInterval: 5000,
   })
 
   // Result query
   const resultQuery = useQuery({
-    queryKey: ['generation-result', taskId],
-    queryFn: () => generationApi.getResult(taskId!),
-    enabled: !!taskId && store.status === 'completed',
+    queryKey: ['generation-result', activeTaskId],
+    queryFn: () => generationApi.getResult(activeTaskId!),
+    enabled: !!activeTaskId && store.status === 'completed',
   })
 
   const startGeneration = useCallback(

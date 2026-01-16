@@ -82,9 +82,12 @@ class Episode(Base, UUIDMixin, TimestampMixin):
     script_input: Mapped[Optional[str]] = mapped_column(
         Text, nullable=True
     )  # 用户输入的原始剧本
-    parsed_script: Mapped[Optional[dict[str, Any]]] = mapped_column(
+    script_parsed: Mapped[Optional[dict[str, Any]]] = mapped_column(
         JSONB, nullable=True
     )  # LLM 解析后的结构化剧本
+    storyboard: Mapped[Optional[dict[str, Any]]] = mapped_column(
+        JSONB, nullable=True
+    )  # 分镜数据
 
     # 状态: pending / script_done / rendering / lipsync / editing / completed / failed
     status: Mapped[str] = mapped_column(String(20), default="pending", index=True)

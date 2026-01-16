@@ -51,7 +51,6 @@ docker compose -f docker/dev/docker-compose.yml logs -f api worker
 
 ### Backend (Local Development)
 ```bash
-# Install dependencies
 pip install -r requirements.txt
 
 # Run API server
@@ -69,7 +68,7 @@ celery -A src.workers.celery_app beat -l info
 cd frontend
 npm install
 npm run dev      # Development server (http://localhost:5173)
-npm run build    # Production build
+npm run build    # Production build (runs tsc first)
 npm run lint     # ESLint
 ```
 
@@ -85,59 +84,13 @@ ruff format src/                # Format code
 mypy src/                       # Type check
 ```
 
+Note: The `tests/` directory is currently empty - tests need to be added.
+
 ## Architecture
 
-### Project Structure
-```
-MangaForge/
-├── src/                          # Backend source code
-│   ├── api/                      # FastAPI application
-│   │   ├── main.py              # App entry, lifespan, routers
-│   │   ├── deps.py              # Dependency injection
-│   │   ├── routes/              # API endpoints
-│   │   ├── schemas/             # Pydantic models
-│   │   └── websocket/           # WebSocket handlers
-│   ├── agents/                   # LangGraph agents
-│   │   ├── base_agent.py        # Base class with StateGraph
-│   │   ├── script_agent.py      # Script parsing/expansion
-│   │   ├── character_agent.py   # Character image generation
-│   │   ├── storyboard_agent.py  # Shot planning
-│   │   ├── render_agent.py      # Image rendering (ComfyUI)
-│   │   ├── video_agent.py       # Image-to-video (Kling)
-│   │   ├── voice_agent.py       # Voice synthesis
-│   │   ├── lipsync_agent.py     # Lip-sync (SadTalker)
-│   │   ├── editor_agent.py      # Final video assembly
-│   │   └── orchestrator.py      # Pipeline orchestrator
-│   ├── services/                 # Pluggable service backends
-│   │   ├── base.py              # Service interfaces
-│   │   ├── factory.py           # Service factory
-│   │   ├── llm/                 # LLM services
-│   │   ├── image/               # Image generation
-│   │   ├── video/               # Video generation
-│   │   ├── voice/               # Voice synthesis
-│   │   └── lipsync/             # Lip-sync
-│   ├── models/                   # SQLAlchemy ORM models
-│   ├── db/                       # Database & Redis connections
-│   ├── storage/                  # MinIO client
-│   ├── workers/                  # Celery tasks
-│   │   ├── celery_app.py        # Celery configuration
-│   │   └── tasks/               # Task definitions
-│   └── config/                   # Pydantic settings
-├── frontend/                     # React frontend
-│   ├── src/
-│   │   ├── api/                 # API client (Axios)
-│   │   ├── components/          # React components
-│   │   ├── pages/               # Page components
-│   │   ├── stores/              # Zustand stores
-│   │   └── hooks/               # Custom hooks
-│   └── ...
-├── docker/dev/                   # Docker Compose for development
-├── scripts/init-db.sql          # Database schema
-└── docs/                         # Documentation
-```
-
 ### Multi-Agent Pipeline
-The orchestrator (`src/agents/orchestrator.py`) runs the following pipeline:
+
+The orchestrator (`src/agents/orchestrator.py`) runs this 8-stage pipeline:
 
 1. **ScriptAgent** → Parse user text into structured screenplay (scenes, shots, dialogs)
 2. **CharacterAgent** → Generate character reference images for consistency
@@ -148,72 +101,66 @@ The orchestrator (`src/agents/orchestrator.py`) runs the following pipeline:
 7. **LipsyncAgent** → Sync mouth movements with audio (SadTalker)
 8. **EditorAgent** → Assemble final video with transitions, subtitles, BGM (FFmpeg)
 
+The orchestrator supports partial regeneration via `generate_partial()` - you can skip stages and reuse existing data.
+
 ### Agent Implementation Pattern
-Agents inherit from `BaseAgent` and implement:
+
+Agents inherit from `BaseAgent` (`src/agents/base_agent.py`):
 ```python
 class MyAgent(BaseAgent):
     async def run(self, input_data: dict) -> dict:
-        # Build and run LangGraph StateGraph
         graph = self._build_graph()
         result = await graph.ainvoke(initial_state)
         return result
 
     def _build_graph(self) -> StateGraph:
-        # Define nodes and edges
+        # Define LangGraph nodes and edges
         pass
 ```
 
 ### Service Layer Pattern
-Services use a factory pattern for pluggable backends:
+
+Services use a factory pattern for pluggable backends (`src/services/factory.py`):
 ```python
-# src/services/factory.py
-factory = ServiceFactory(user_id="...")
-llm_service = factory.create_service(ServiceType.LLM, "anthropic", config)
+factory = get_service_factory()
+llm = factory.get_llm_service(provider="anthropic")  # or "openai"
+image = factory.get_image_service(provider="comfyui")
+voice = factory.get_voice_service(provider="edge-tts")  # or "fish-speech"
 ```
 
+Available service types: `LLM`, `IMAGE`, `VIDEO`, `VOICE`, `LIPSYNC`
+
+To add a new service provider:
+1. Create service class in `src/services/{type}/` inheriting from base
+2. Register in `SERVICE_REGISTRY` dict in `src/services/factory.py`
+3. Add provider to `supported_providers` table in database
+
+### Real-time Progress
+
+WebSocket + Redis Pub/Sub delivers real-time progress updates:
+- Backend publishes to Redis channels during generation
+- WebSocket handler (`src/api/websocket/progress.py`) subscribes and forwards to clients
+- Progress callback in orchestrator supports both sync and async callbacks
+
 ### Database Schema
+
 Core tables (see `scripts/init-db.sql`):
-- `projects` → Top-level container
+- `projects` → Top-level container with style/platform settings
 - `characters` → Character definitions per project
 - `episodes` → Episodes within a project
 - `shots` → Individual shots within episodes
-- `tasks` → Async task tracking
-- `user_api_configs` → User-configured API keys
+- `tasks` → Async task tracking with status/progress
+- `user_api_configs` → User-configured API keys per service
 - `supported_providers` → Available service providers
 
-### API Endpoints
-| Route | Description |
-|-------|-------------|
-| `GET /health` | Health check |
-| `GET/POST /api/v1/projects` | Project CRUD |
-| `GET/POST /api/v1/projects/{id}/characters` | Character management |
-| `GET/POST /api/v1/projects/{id}/episodes` | Episode management |
-| `POST /api/v1/generate` | Start generation task |
-| `GET /api/v1/generate/{task_id}/status` | Task status |
-| `WS /api/v1/ws/task/{task_id}` | Real-time progress |
-| `GET/POST /api/v1/config` | User API config |
+### Configuration
 
-### WebSocket Progress
-Real-time progress is delivered via WebSocket + Redis Pub/Sub:
-```javascript
-// Frontend subscribes to task progress
-const ws = new WebSocket(`ws://localhost:8000/api/v1/ws/task/${taskId}`)
-ws.onmessage = (event) => {
-  const { type, data } = JSON.parse(event.data)
-  // type: 'progress' | 'stage_complete' | 'complete' | 'error'
-}
-```
+Settings loaded via Pydantic from environment variables (`src/config/settings.py`). See `.env.example` for all available options.
 
-## Environment Variables
-
-Key environment variables (see `.env.example`):
-- `DATABASE_URL` - PostgreSQL connection string
-- `REDIS_URL` - Redis connection string
-- `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY` - Object storage
-- `CELERY_BROKER_URL` - RabbitMQ connection
-- `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` - LLM API keys
-- `COMFYUI_URL` - ComfyUI service endpoint
-- `SADTALKER_URL` - SadTalker service endpoint
+Key settings:
+- `LLM_PROVIDER`: "anthropic" | "openai" | "local"
+- `COMFYUI_URL`, `SADTALKER_URL`: Local AI service endpoints
+- `ONE_API_URL`: LLM gateway for unified API access
 
 ## Service Ports
 

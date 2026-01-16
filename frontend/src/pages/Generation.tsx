@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { QuickPublishDrawer } from '../components/QuickPublishDrawer'
-import { useEpisode } from '../hooks/useEpisodes'
+import { useEpisode, useUpdateEpisode, useExpandEpisode } from '../hooks/useEpisodes'
 import { useProject } from '../hooks/useProjects'
 import { useGeneration } from '../hooks/useGeneration'
 
@@ -14,7 +14,46 @@ export function Generation() {
 
   const { data: project } = useProject(projectId)
   const { data: episode, isLoading: episodeLoading } = useEpisode(projectId, episodeId, true)
-  const generation = useGeneration(episode?.id ? undefined : undefined)
+  const generation = useGeneration()
+  const updateEpisode = useUpdateEpisode()
+  const expandEpisode = useExpandEpisode()
+
+  // Script input state
+  const [scriptInput, setScriptInput] = useState('')
+
+  // Sync script input with episode data
+  useEffect(() => {
+    if (episode?.script_input) {
+      setScriptInput(episode.script_input)
+    }
+  }, [episode?.script_input])
+
+  // Handle Generate All button click
+  const handleGenerateAll = () => {
+    if (!episode?.id) return
+    generation.startGeneration({
+      episode_id: episode.id,
+      style: project?.style,
+      add_subtitles: true,
+    })
+  }
+
+  // Handle Expand Outline to Shots button click
+  const handleExpandOutline = async () => {
+    if (!projectId || !episodeId) return
+
+    // First save the script input if it changed
+    if (scriptInput !== episode?.script_input) {
+      await updateEpisode.mutateAsync({
+        projectId,
+        episodeId,
+        data: { script_input: scriptInput },
+      })
+    }
+
+    // Then expand
+    expandEpisode.mutate({ projectId, episodeId })
+  }
 
   const [isPublishDrawerOpen, setIsPublishDrawerOpen] = useState(false)
 
@@ -51,33 +90,51 @@ export function Generation() {
             <div className="flex flex-col flex-1 overflow-y-auto px-4 py-2 space-y-4">
                 <div className="flex flex-col gap-2">
                     <label className="text-text-secondary text-xs font-bold uppercase tracking-wider">Story Context / Outline</label>
-                    <textarea className="form-input w-full resize-none rounded-lg text-white focus:outline-0 focus:ring-1 focus:ring-primary border border-border-dark bg-surface-dark placeholder:text-text-secondary/50 p-3 text-sm font-normal leading-relaxed min-h-[160px]" placeholder="Enter your story outline here... E.g. A cyberpunk samurai walks through a neon-lit rainstorm looking for the lost chip."></textarea>
+                    <textarea
+                      value={scriptInput}
+                      onChange={(e) => setScriptInput(e.target.value)}
+                      className="form-input w-full resize-none rounded-lg text-white focus:outline-0 focus:ring-1 focus:ring-primary border border-border-dark bg-surface-dark placeholder:text-text-secondary/50 p-3 text-sm font-normal leading-relaxed min-h-[160px]"
+                      placeholder="Enter your story outline here... E.g. A cyberpunk samurai walks through a neon-lit rainstorm looking for the lost chip."
+                    />
                 </div>
-                <button className="group flex w-full cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-surface-dark border border-border-dark text-white gap-2 text-sm font-bold hover:border-primary/50 hover:bg-surface-dark/80 transition-all">
-                    <span className="material-symbols-outlined text-purple-400 group-hover:text-purple-300">auto_awesome</span>
-                    <span>Expand Outline to Shots</span>
+                <button
+                  onClick={handleExpandOutline}
+                  disabled={expandEpisode.isPending || !scriptInput.trim() || !episodeId}
+                  className="group flex w-full cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-surface-dark border border-border-dark text-white gap-2 text-sm font-bold hover:border-primary/50 hover:bg-surface-dark/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span className={`material-symbols-outlined text-purple-400 group-hover:text-purple-300 ${expandEpisode.isPending ? 'animate-spin' : ''}`}>
+                      {expandEpisode.isPending ? 'progress_activity' : 'auto_awesome'}
+                    </span>
+                    <span>{expandEpisode.isPending ? 'Expanding...' : 'Expand Outline to Shots'}</span>
                 </button>
                 <div className="w-full h-px bg-border-dark my-2"></div>
                 <div className="flex flex-col gap-2">
                     <label className="text-text-secondary text-xs font-bold uppercase tracking-wider mb-1">Scene Breakdown</label>
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/10 border border-primary/30 cursor-pointer">
-                        <span className="text-primary font-bold text-xs mt-0.5">01</span>
-                        <div className="flex-1">
-                            <p className="text-white text-sm font-medium line-clamp-2">Establishing shot: Neon city streets, heavy rain.</p>
+                    {shots.length === 0 ? (
+                      <div className="text-text-secondary text-sm text-center py-4">
+                        No shots yet. Enter a story outline and click "Expand Outline to Shots".
+                      </div>
+                    ) : (
+                      shots.map((shot, index) => (
+                        <div
+                          key={shot.id}
+                          className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                            index === 0
+                              ? 'bg-primary/10 border border-primary/30'
+                              : 'hover:bg-surface-dark border border-transparent hover:border-border-dark'
+                          }`}
+                        >
+                          <span className={`font-bold text-xs mt-0.5 ${index === 0 ? 'text-primary' : 'text-text-secondary'}`}>
+                            {String(shot.shot_number).padStart(2, '0')}
+                          </span>
+                          <div className="flex-1">
+                            <p className={`text-sm font-medium line-clamp-2 ${index === 0 ? 'text-white' : 'text-text-secondary'}`}>
+                              {shot.scene_description || shot.dialog?.text || 'No description'}
+                            </p>
+                          </div>
                         </div>
-                    </div>
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-surface-dark border border-transparent hover:border-border-dark cursor-pointer transition-colors">
-                        <span className="text-text-secondary font-bold text-xs mt-0.5">02</span>
-                        <div className="flex-1">
-                            <p className="text-text-secondary text-sm font-medium line-clamp-2">Close up: Protagonist's boots splashing in a puddle.</p>
-                        </div>
-                    </div>
-                    <div className="flex items-start gap-3 p-3 rounded-lg hover:bg-surface-dark border border-transparent hover:border-border-dark cursor-pointer transition-colors">
-                        <span className="text-text-secondary font-bold text-xs mt-0.5">03</span>
-                        <div className="flex-1">
-                            <p className="text-text-secondary text-sm font-medium line-clamp-2">Mid shot: He looks up at the towering holographic ad.</p>
-                        </div>
-                    </div>
+                      ))
+                    )}
                 </div>
             </div>
         </aside>
@@ -288,7 +345,8 @@ export function Generation() {
 
             <div className="p-5 border-t border-border-dark bg-surface-dark">
                 <button
-                  disabled={generation.status === 'running' || episodeLoading}
+                  onClick={handleGenerateAll}
+                  disabled={generation.status === 'running' || episodeLoading || !episode?.id}
                   className="w-full flex items-center justify-center gap-3 bg-primary hover:bg-blue-600 text-white rounded-lg h-12 font-bold text-base shadow-[0_0_15px_rgba(19,91,236,0.4)] transition-all hover:shadow-[0_0_20px_rgba(19,91,236,0.6)] transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <span className={`material-symbols-outlined icon-filled ${generation.status === 'running' ? 'animate-spin' : ''}`}>

@@ -82,4 +82,13 @@ export const episodesApi = {
   delete: async (projectId: string, episodeId: string): Promise<void> => {
     await apiClient.delete(`/projects/${projectId}/episodes/${episodeId}`)
   },
+
+  /**
+   * 扩展剧本为分镜
+   * 使用 LLM 解析剧本并生成分镜数据
+   */
+  expand: async (projectId: string, episodeId: string): Promise<Episode> => {
+    const response = await apiClient.post<Episode>(`/projects/${projectId}/episodes/${episodeId}/expand`)
+    return response.data
+  },
 }
