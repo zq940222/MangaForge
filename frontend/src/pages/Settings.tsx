@@ -105,6 +105,7 @@ function ProviderCard({
               onChange={(e) => setApiKey(e.target.value)}
             />
             <button
+              type="button"
               onClick={() => setShowApiKey(!showApiKey)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-white"
             >
